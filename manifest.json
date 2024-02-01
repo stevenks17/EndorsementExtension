@@ -1,92 +1,75 @@
 {
-   "name": "WeVote Endorsement Chrome Extension",
-   "version": "1.0.1.01",
-   "manifest_version": 3,
-   "description": "Highlights existing, and new opportunities, for endorsements on voter guide pages.",
-   "icons": {
+  "name": "WeVote Endorsement Chrome Extension",
+  "version": "1.0.1.01",
+  "manifest_version": 3,
+  "description": "Highlights existing, and new opportunities, for endorsements on voter guide pages.",
+  "icons": {
+    "16": "./images/icon16.png",
+    "48": "./images/icon48.png",
+    "96": "./images/icon96.png",
+    "128": "./images/icon128.png"
+  },
+  "background": {
+    "service_worker": "./js/serviceWorker/serviceWorker.js",
+    "css": ["libs/jquery-ui-modified/jquery-ui.theme-1.12.1-we-vote.css"]
+  },
+  "action": {
+    "default_popup": "./js/popup/popup.html",
+    "default_icons": {
       "16": "./images/icon16.png",
+      "32": "./images/icon32.png",
       "48": "./images/icon48.png",
-      "96": "./images/icon96.png",
       "128": "./images/icon128.png"
-   },
-   "background": {
-      "service_worker": "./js/serviceWorker/serviceWorker.js",
+    }
+  },
+  "permissions": ["scripting", "storage", "contextMenus", "tabs", "alarms"],
+  "host_permissions": ["https://www.google.com/*"],
+  "optional_host_permissions": ["*://*/*"],
+  "commands": {
+    "ScrollHighlight": {
+      "description": "ScrollHighlight",
+      "suggested_key": {
+        "default": "Ctrl+Shift+Space",
+        "mac": "Command+Shift+Space"
+      }
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "libs/jquery/jquery-3.6.0.min.js",
+        "js/contentForeground/dragElement.js"
+      ],
+      "matches": ["*://*/*"]
+    }
+  ],
+  "content_scripts": [
+    {
+      "all_frames": true,
       "css": [
-         "libs/jquery-ui-modified/jquery-ui.theme-1.12.1-we-vote.css"
-      ]
-   },
-   "action": {
-      "default_popup": "./js/popup/popup.html",
-      "default_icons": {
-         "16": "./images/icon16.png",
-         "32": "./images/icon32.png",
-         "48": "./images/icon48.png",
-         "128": "./images/icon128.png"
-      }
-   },
-   "permissions": [
-      "scripting",
-      "storage",
-      "contextMenus",
-      "tabs"
-   ],
-   "host_permissions": [
-      "https://www.google.com/*"
-   ],
-   "optional_host_permissions": [
-      "*://*/*"
-   ],
-   "commands": {
-      "ScrollHighlight": {
-         "description": "ScrollHighlight",
-         "suggested_key": {
-            "default": "Ctrl+Shift+Space",
-            "mac": "Command+Shift+Space"
-         }
-      }
-   },
-   "web_accessible_resources": [
-      {
-         "resources": [
-            "libs/jquery/jquery-3.6.0.min.js",
-            "js/contentForeground/dragElement.js"
-         ],
-         "matches": [
-            "*://*/*"
-         ]
-      }
-   ],
-   "content_scripts": [
-      {
-         "all_frames": true,
-         "css": [
-            "css/highlightThis.css",
-            "css/weVote.css",
-            "css/weVoteGrid.css",
-            "js/contentForeground/dragElement.js",
-            "libs/jquery-ui-modified/jquery-ui.theme-1.12.1-we-vote.css"
-         ],
-         "js": [
-            "js/contentForeground/hilitor.js",
-            "js/contentForeground/tabWordHighlighter.js",
-            "js/contentForeground/contentWeVoteUI.js",
-            "js/contentForeground/dragElement.js",
-            "js/common/config.js",
-            "js/common/commonWeVote.js",
-            "js/common/globalState.js",
-            "libs/jquery/jquery-3.6.0.min.js",
-            "libs/jquery-ui-modified/jquery-ui-1.12.1.min-we-vote.js",
-            "libs/string-similarity/compare-strings.js"
-         ],
-         "match_about_blank": true,
-         "matches": [
-            "http://*/*",
-            "https://*/*"
-         ],
-         "run_at": "document_start"
-      }
-   ],
-   "update_url": "https://clients2.google.com/service/update2/crx",
-   "default_locale": "en"
+        "css/highlightThis.css",
+        "css/weVote.css",
+        "css/weVoteGrid.css",
+        "js/contentForeground/dragElement.js",
+        "libs/jquery-ui-modified/jquery-ui.theme-1.12.1-we-vote.css"
+      ],
+      "js": [
+        "js/contentForeground/hilitor.js",
+        "js/contentForeground/tabWordHighlighter.js",
+        "js/contentForeground/contentWeVoteUI.js",
+        "js/contentForeground/dragElement.js",
+        "js/common/config.js",
+        "js/common/commonWeVote.js",
+        "js/common/globalState.js",
+        "libs/jquery/jquery-3.6.0.min.js",
+        "libs/jquery-ui-modified/jquery-ui-1.12.1.min-we-vote.js",
+        "libs/string-similarity/compare-strings.js"
+      ],
+      "match_about_blank": true,
+      "matches": ["http://*/*", "https://*/*"],
+      "run_at": "document_start"
+    }
+  ],
+  "update_url": "https://clients2.google.com/service/update2/crx",
+  "default_locale": "en"
 }
-
