@@ -20,8 +20,8 @@ self.oninstall = () => {
   }
 };
 
-chrome.runtime.onMessage.addListener(message => {
-  if (message.command === "heartbeat") {
-    console.log("Heartbeat received");
+chrome.runtime.onMessage.addListener(request => {
+  if (request.command === "heartbeat") {
+    console.log("Service Worker: Heartbeat confirmed");
   }
 });

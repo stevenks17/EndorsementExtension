@@ -790,17 +790,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   let showCandidateOptionsHighlights;
 
   if (request.command === "heartbeat") {
-    console.log("Heartbeat message received.");
-    // Acknowledge the heartbeat or perform any necessary action
-    sendResponse({ status: "alive" });
-    return true; // Indicates that the response is asynchronous in some cases
-  } else if (request.command === "initializeHighlightsData") {
-    initializeHighlightsData(
-      request.ballotItemHighlights,
-      request.voterGuideHighlights,
-      request.neverHighLightOn
+    console.log(
+      `Heartbeat received in extWordHighlighter from [Origin: ${request.origin}]`
     );
-    sendResponse({ command: request.command, success: true });
+    sendResponse({ status: "alive" });
+    return true;
   }
   if (request.command === "getTopMenuData") {
     debugSwLog("MESSAGING:  request.url ", request.url);

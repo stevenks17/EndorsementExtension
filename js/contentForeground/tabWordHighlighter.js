@@ -104,7 +104,12 @@ function isInANonWeVoteIFrame() {
 }
 
 function setupHeartbeat() {
-  chrome.runtime.sendMessage({ command: "heartbeat" });
+  chrome.runtime.sendMessage({
+    command: "heartbeat",
+    origin: "tabWordHighlighter",
+  });
+  console.log(`Heartbeat sent from ${origin} at ${new Date().toISOString()}`);
+
   setTimeout(setupHeartbeat, 300000); // 5 minutes
 }
 
