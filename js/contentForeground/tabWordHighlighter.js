@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', async function () {  // This waste
             }else {
               showPanels = false
               displayHighlightingAndPossiblyEditor(showHighlights, showPanels, tabId);
+              retryLoadPositionPanel();
             }           
           }
           else if (showHighlights) {

@@ -362,32 +362,36 @@ async function doGetCombinedHighlights (showPanels, tabId, urlToQuery) {
   const { chrome: { runtime: { sendMessage, lastError } } } = window;
   const state = await getGlobalState();
   const { voterWeVoteId } = state;
-  if(showPanels){
+  if(showPanels && document.activeElement.tagName.toLowerCase() === 'iframe'){
     var myIFrame = document.getElementById("frame");
     var pageContent = myIFrame.contentWindow.document.body.innerText;
   }else {
     pageContent = document.body.innerText
   }
   debugFgLog('^^^^^^^^^^^^^^^^^^^ sendMessage getCombinedHighlights in doGetCombinedHighlights');
-  sendMessage({command: 'getCombinedHighlights', voterWeVoteId: voterWeVoteId, tabId: tabId, url: urlToQuery, doReHighlight: true, pageContent},
-    function (response) {
-      if (lastError) {
-        debugFgLog('ERROR: chrome.runtime.sendMessage("getCombinedHighlights")', lastError.message);
-      }
-      if (showPanels) debugFgLog('AFTER === 7 Second Delay ===');
-      debugFgLog('RESPONSE in contentWeVoteUI > getCombinedHighlights() ========================== response: ', response);
-      debugFgLog('getCombinedHighlights() response', response);
+  return new Promise((resolve, reject) => {
+    sendMessage({command: 'getCombinedHighlights', voterWeVoteId: voterWeVoteId, tabId: tabId, url: urlToQuery, doReHighlight: true, pageContent},
+      function (response) {
+        if (lastError) {
+          debugFgLog('ERROR: chrome.runtime.sendMessage("getCombinedHighlights")', lastError.message);
+        }
+        if (showPanels) debugFgLog('AFTER === 7 Second Delay ===');
+        debugFgLog('RESPONSE in contentWeVoteUI > getCombinedHighlights() ========================== response: ', response);
+        debugFgLog('getCombinedHighlights() response', response);
 
-      if (response) {
-        const t4 = performance.now();
-        /* timingLogDebug &&*/ timingLog(t3, t4, 'getCombinedHighlights took', 8.0);
-        debugFgLog('SUCCESS: getCombinedHighlights received a response: ', response, '  showPanels:', showPanels, ', tabId: ', tabId);
-        namesToIds = response.nameToIdMap;  // This one only works if NOT in an iFrame
-      } else {
-        debugFgLog('ERROR: getCombinedHighlights received empty response');
+        if (response) {
+          const t4 = performance.now();
+          /* timingLogDebug &&*/ timingLog(t3, t4, 'getCombinedHighlights took', 8.0);
+          debugFgLog('SUCCESS: getCombinedHighlights received a response: ', response, '  showPanels:', showPanels, ', tabId: ', tabId);
+          namesToIds = response.nameToIdMap; 
+          resolve (namesToIds) // This one only works if NOT in an iFrame
+        } else {
+          debugFgLog('ERROR: getCombinedHighlights received empty response');
+          resolve(null)
+        }
       }
-    }
-  );
+    );
+  })
 }
 
 // Get the href into the extension
@@ -608,7 +612,7 @@ function retryLoadPositionPanel () {
 async function handleUpdatedOrNewPositions (update, fromIFrame, preLoad, dialogClosed) {
   const { runtime: { sendMessage, lastError } } = chrome;
   const state = await getGlobalState();
-  const { voterGuidePossibilityId, voterWeVoteId } = state;
+  const { voterGuidePossibilityId, voterWeVoteId, tabId, showPanels } = state;
 
   debugFgLog('ENTERING contentWeVoteUI > handleUpdatedOrNewPositions() getPositions, voterGuidePossibilityId: ' + voterGuidePossibilityId);
 
@@ -631,6 +635,18 @@ async function handleUpdatedOrNewPositions (update, fromIFrame, preLoad, dialogC
       if ((response && Object.entries(response).length > 0) && (response.data !== undefined) && (response.data.length > 0)) {
         let {data} = response;
         // debugFgLog('--------------- handleUpdatedOrNewPositions: booleans, response and previous', update, fromIFrame, preLoad, data, priorData);
+        urlToQuery = window.location.href;
+        namesToIds = await doGetCombinedHighlights (showPanels, tabId, urlToQuery)
+        const names = Object.keys(namesToIds);
+        for (let i=0; i<names.length;i++){
+          let words = names[i].split(' ')
+          for (let i = 0; i < words.length; i++) {
+            words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
+          }
+          names[i] = words.join(" ");
+        }
+        const resultArray = names.map(name => ({ ballot_item_name: name }));
+        data.push(...resultArray)
         if (!preLoad && !hasCandidateDataChanged(data)) {
           // debugFgLog('handleUpdatedOrNewPositions -------------- no change in data, aborting update of positions panel');
           return;
@@ -687,7 +703,13 @@ async function coreUpdatePositions (data, update) {
   let organizationWeVoteIdOuter = '';
   let positionsCount = data.length;
   await updateGlobalState({ positionsCount: positionsCount });
-  let selector = update ? $('#sideArea') : 'none';
+  let selector = ''
+  if (document.activeElement.tagName.toLowerCase() === 'iframe'){
+    selector = update ? document.getElementById('sideArea') : 'none';
+  }else{
+    selector = update ? parent.document.getElementById('sideArea') : 'none';
+  }
+  selector.innerHTML = '';
   if (positionsCount > 0) {
     if (update) {
       setSideAreaStatus();
@@ -741,7 +763,7 @@ async function coreUpdatePositions (data, update) {
       };
 
       let offs = 0;
-      if (update && allHtml) {     // Does not exist if we have not re-opened the page in a frame
+      if (update && allHtml && alternateNames) {     // Does not exist if we have not re-opened the page in a frame
         offs = allHtml.indexOf(name);
         for (let j = 0; j < alternateNames.length && offs < 0; j++) {
           offs = allHtml.indexOf(alternateNames[j]);
@@ -790,10 +812,14 @@ function rightPositionPanes (i, candidate, selector) {
       ', positionWeVoteId: ' + positionWeVoteId);
     return false;
   }
-  if (!dupe) {
-    $(selector).append(candidatePaneMarkup(candNo, furlNo, i, candidate, false));
-    $('.statementText-' + i).val(comment);
-    $('.moreInfoURL-' + i).val(url).css('height: unset !important;');
+    if (!dupe) {
+      const candidatePaneHTML = candidatePaneMarkup(candNo, furlNo, i, candidate, false);
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = candidatePaneHTML;
+      const candidatePaneElement = tempDiv.firstChild;
+      selector.appendChild(candidatePaneElement);
+      $('.statementText-' + i).val(comment);
+      $('.moreInfoURL-' + i).val(url).css('height: unset !important;');
     return true;
   } else {
     debugFgLog('Found duplicate voterGuidePossibility candidate ... indicates data problem, or unnecessary rightPositionPanes calls.');
@@ -1417,7 +1443,7 @@ function isParentFurlable (target) {
 }
 
 function attachClickHandlers () {
-  //debugFgLog("attachClickHandlers", $('div.candidateWe').length);
+//debugFgLog("attachClickHandlers", $('div.candidateWe').length);
 
   $('div.candidateWe').click((event) => {
     // console.log('CLICKED: div.candidateWe clicked, target: ', event.target);

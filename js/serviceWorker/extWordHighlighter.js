@@ -72,7 +72,7 @@ function getWordsInGroup (groupName, highlightsList) {
   for (let i = 0; i < highlightsList.length; i++) {
     let highlight = highlightsList[i];
     if (stance.length === 0) {
-      if (highlight.display === display) {
+      if (highlight.display === display && highlight.we_vote_id === '') {
         wordList.push(highlight.name);
       }
     } else {
