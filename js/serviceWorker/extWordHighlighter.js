@@ -72,7 +72,7 @@ function getWordsInGroup (groupName, highlightsList) {
   for (let i = 0; i < highlightsList.length; i++) {
     let highlight = highlightsList[i];
     if (stance.length === 0) {
-      if (highlight.display === display && highlight.we_vote_id === '') {
+      if (highlight.display === display) {
         wordList.push(highlight.name);
       }
     } else {
@@ -94,7 +94,7 @@ function combineHighlightsLists (voterGuideHighlights) {
   for (let i = 0; i < voterGuideHighlights.length; i++) {
     let highlight = voterGuideHighlights[i];
     const {we_vote_id: weVoteId, name, display} = highlight;
-    if (name && name.length > 2 && weVoteId === '' && display=== 'DEFAULT') {
+    if (name && name.length > 2 && display=== 'DEFAULT' && !Object.values(nameToIdMap).includes(weVoteId)) {
       nameToIdMap[name.toLowerCase()] = weVoteId;
       highlight.display = 'DEFAULT';
       highlight.stance = '';      
