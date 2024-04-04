@@ -364,30 +364,34 @@ async function doGetCombinedHighlights (showPanels, tabId, urlToQuery) {
   const { voterWeVoteId } = state;
   if(showPanels){
     var myIFrame = document.getElementById("frame");
-    var pageContent = myIFrame.contentWindow.document.body.innerText;
+    var pageContent = myIFrame ? myIFrame.contentWindow.document.body.innerText : document.body.innerText;
   }else {
     pageContent = document.body.innerText
   }
   debugFgLog('^^^^^^^^^^^^^^^^^^^ sendMessage getCombinedHighlights in doGetCombinedHighlights');
-  sendMessage({command: 'getCombinedHighlights', voterWeVoteId: voterWeVoteId, tabId: tabId, url: urlToQuery, doReHighlight: true, pageContent},
-    function (response) {
-      if (lastError) {
-        debugFgLog('ERROR: chrome.runtime.sendMessage("getCombinedHighlights")', lastError.message);
-      }
-      if (showPanels) debugFgLog('AFTER === 7 Second Delay ===');
-      debugFgLog('RESPONSE in contentWeVoteUI > getCombinedHighlights() ========================== response: ', response);
-      debugFgLog('getCombinedHighlights() response', response);
+  return new Promise((resolve, reject) => {
+    sendMessage({command: 'getCombinedHighlights', voterWeVoteId: voterWeVoteId, tabId: tabId, url: urlToQuery, doReHighlight: true, pageContent},
+      function (response) {
+        if (lastError) {
+          debugFgLog('ERROR: chrome.runtime.sendMessage("getCombinedHighlights")', lastError.message);
+        }
+        if (showPanels) debugFgLog('AFTER === 7 Second Delay ===');
+        debugFgLog('RESPONSE in contentWeVoteUI > getCombinedHighlights() ========================== response: ', response);
+        debugFgLog('getCombinedHighlights() response', response);
 
-      if (response) {
-        const t4 = performance.now();
-        /* timingLogDebug &&*/ timingLog(t3, t4, 'getCombinedHighlights took', 8.0);
-        debugFgLog('SUCCESS: getCombinedHighlights received a response: ', response, '  showPanels:', showPanels, ', tabId: ', tabId);
-        namesToIds = response.nameToIdMap;  // This one only works if NOT in an iFrame
-      } else {
-        debugFgLog('ERROR: getCombinedHighlights received empty response');
+        if (response) {
+          const t4 = performance.now();
+          /* timingLogDebug &&*/ timingLog(t3, t4, 'getCombinedHighlights took', 8.0);
+          debugFgLog('SUCCESS: getCombinedHighlights received a response: ', response, '  showPanels:', showPanels, ', tabId: ', tabId);
+          namesToIds = response.nameToIdMap; 
+          resolve (namesToIds) // This one only works if NOT in an iFrame
+        } else {
+          debugFgLog('ERROR: getCombinedHighlights received empty response');
+          resolve(null)
+        }
       }
-    }
-  );
+    );
+  })
 }
 
 // Get the href into the extension
@@ -460,14 +464,36 @@ async function handleGetRefreshedHighlightsResponse (response, showPanels, lastE
   if (response) {
     debugFgLog('SUCCESS: getRefreshedHighlights received a response', response);
     const state = await getGlobalState();
-    const { showHighlights } = state;
+    const { showHighlights, candidateName } = state;
     if (showHighlights) {
       await updateGlobalState({ reloadTimeStamp: Date.now()});
       debugFgLog('getRefreshedHighlights reloading iframe (logging before the actual reload)');
-      if (showPanels) {
-        document.getElementsByClassName('weVoteEndorsementFrame')[0].contentDocument.location.reload(true);  // Works when called from the candidate pane
-      } else {
-        window.location.reload();  // Reload the Editor mode iframe from within the iframe
+      const nameInFrame = $(parent.document).find('#frame:first').contents().find(':contains(' + candidateName + '):last');
+      if (nameInFrame.length !== 0){
+        const buttonId = candidateName.replace(/\s+/g, '');
+        const selector = `button[id="${buttonId}"]`;
+        const isActiveElementInIframe = document.activeElement.classList.contains('ae-iframe-body');
+        let button = '';
+        if (isActiveElementInIframe){
+          button = document.querySelector(selector)
+        }else{
+          button = parent.document.querySelector('.weVoteEndorsementFrame').contentDocument.querySelector(`button[id="${buttonId}"]`);
+        }
+        const emElement = button.querySelector('em');
+        if (state.voterGuideHighlights.Groups[1].Words.includes(candidateName)) {
+          const backgroundColor = state.voterGuideHighlights.Groups[1].Color;
+          emElement.style.backgroundColor = backgroundColor;
+          emElement.style.color = '#FFFFFF';
+        }else if(state.voterGuideHighlights.Groups[3].Words.includes(candidateName)) {
+          emElement.style.backgroundColor = "#fb6532";
+          emElement.style.color = '#000000';
+        }else if(state.voterGuideHighlights.Groups[5].Words.includes(candidateName)) {
+          emElement.style.backgroundColor = "#7c7b7c";
+          emElement.style.color = '#000000';
+        }else{
+          emElement.style.backgroundColor = '#ff6';
+          emElement.style.color = '#000000';
+        }
       }
     } else {
       debugFgLog('getRefreshedHighlights reloading endorsement page (before reload)');
@@ -608,7 +634,7 @@ function retryLoadPositionPanel () {
 async function handleUpdatedOrNewPositions (update, fromIFrame, preLoad, dialogClosed) {
   const { runtime: { sendMessage, lastError } } = chrome;
   const state = await getGlobalState();
-  const { voterGuidePossibilityId, voterWeVoteId } = state;
+  const { voterGuidePossibilityId, voterWeVoteId, tabId, showPanels } = state;
 
   debugFgLog('ENTERING contentWeVoteUI > handleUpdatedOrNewPositions() getPositions, voterGuidePossibilityId: ' + voterGuidePossibilityId);
 
@@ -631,6 +657,25 @@ async function handleUpdatedOrNewPositions (update, fromIFrame, preLoad, dialogC
       if ((response && Object.entries(response).length > 0) && (response.data !== undefined) && (response.data.length > 0)) {
         let {data} = response;
         // debugFgLog('--------------- handleUpdatedOrNewPositions: booleans, response and previous', update, fromIFrame, preLoad, data, priorData);
+        urlToQuery = window.location.href;
+        namesToIds = await doGetCombinedHighlights (showPanels, tabId, urlToQuery)
+        const names = Object.keys(namesToIds);
+        for (let i=0; i<names.length;i++){
+          let words = names[i].split(' ')
+          for (let i = 0; i < words.length; i++) {
+            words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
+          }
+          names[i] = words.join(" ");
+        }
+        for (let i = 0; i < names.length; i++) {
+          const nameInFrame = $(parent.document).find('#frame:first').contents().find(':contains(' + names[i] + '):last');
+          if (nameInFrame.length == 0) {
+            names.splice(i, 1); // Remove the last element from the array
+            i--;
+          }
+        }
+        const resultArray = names.map(name => ({ ballot_item_name: name }));
+        data.push(...resultArray)
         if (!preLoad && !hasCandidateDataChanged(data)) {
           // debugFgLog('handleUpdatedOrNewPositions -------------- no change in data, aborting update of positions panel');
           return;
@@ -687,7 +732,13 @@ async function coreUpdatePositions (data, update) {
   let organizationWeVoteIdOuter = '';
   let positionsCount = data.length;
   await updateGlobalState({ positionsCount: positionsCount });
-  let selector = update ? $('#sideArea') : 'none';
+    let selector = ''
+  if (document.activeElement.tagName.toLowerCase() === 'iframe'){
+    selector = update ? document.getElementById('sideArea') : 'none';
+  }else{
+    selector = update ? parent.document.getElementById('sideArea') : 'none';
+  }
+  selector.innerHTML = '';
   if (positionsCount > 0) {
     if (update) {
       setSideAreaStatus();
@@ -741,7 +792,7 @@ async function coreUpdatePositions (data, update) {
       };
 
       let offs = 0;
-      if (update && allHtml) {     // Does not exist if we have not re-opened the page in a frame
+      if (update && allHtml && alternateNames) {     // Does not exist if we have not re-opened the page in a frame
         offs = allHtml.indexOf(name);
         for (let j = 0; j < alternateNames.length && offs < 0; j++) {
           offs = allHtml.indexOf(alternateNames[j]);
@@ -770,6 +821,7 @@ async function coreUpdatePositions (data, update) {
   });
 
   if (update) {
+    selector.innerHTML = '';
     for (let k = 0; k < positions.length; k++) {
       const {position, selector} = positions[k];
       rightPositionPanes(k, position, selector);
@@ -790,10 +842,14 @@ function rightPositionPanes (i, candidate, selector) {
       ', positionWeVoteId: ' + positionWeVoteId);
     return false;
   }
-  if (!dupe) {
-    $(selector).append(candidatePaneMarkup(candNo, furlNo, i, candidate, false));
-    $('.statementText-' + i).val(comment);
-    $('.moreInfoURL-' + i).val(url).css('height: unset !important;');
+    if (!dupe) {
+      const candidatePaneHTML = candidatePaneMarkup(candNo, furlNo, i, candidate, false);
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = candidatePaneHTML;
+      const candidatePaneElement = tempDiv.firstChild;
+      selector.appendChild(candidatePaneElement);
+      $(parent.document).find('.statementText-' + i).val(comment);
+      $(parent.document).find('.moreInfoURL-' + i).val(url).css('height: unset !important;');
     return true;
   } else {
     debugFgLog('Found duplicate voterGuidePossibility candidate ... indicates data problem, or unnecessary rightPositionPanes calls.');
@@ -834,7 +890,9 @@ function candidatePaneMarkup (candNo, furlNo, i, candidate, detachedDialog) {
   }
 
   const isStored = positionWeVoteId !== undefined && positionWeVoteId !== null && positionWeVoteId.length > 0;
-  let markup =
+  let markup = '';
+  if (organizationWeVoteId === undefined && candidateWeVoteId=== undefined){
+    markup =
     "<div class='candidateWe " + candNo + "'>" +
     "  <div id='unfurlable-" + i + "' class='" + (detachedDialog ? 'unfurlableDetached' : 'unfurlable') + "'>" +
          unfurlableGrid(i, name, photo, party, office, description, inLeftPane, detachedDialog, stance, isStored, comment.trim().length > 0, false) +
@@ -850,32 +908,60 @@ function candidatePaneMarkup (candNo, furlNo, i, candidate, detachedDialog) {
     "    <input type='hidden' id='isStored-" + i + "' value='" + isStored + "'>" +
     '  </div>' +
     '  <div id=' + furlNo + " class='furlable' " + (detachedDialog ? '' : 'hidden') + '>' +
-    "    <div class='core-text aliases'>" + aliases + '</div>' +
-    "    <span class='buttons'>" +
-           supportButton(i, 'endorse', stance) +
-           supportButton(i, 'oppose', stance) +
-           supportButton(i, 'info', stance) +
-    '    </span>' +
-    "    <textarea rows='6' class='statementText-" + i + " removeContentStyles' style='margin: 0; text-align: left;'></textarea>" +
-    '    <br><span class="core-text" style="margin: 0; text-align: left;">If dedicated candidate page exists, enter URL here:</span>' +
-    '    <input type="text" class="moreInfoURL-' + i + ' weInfoText removeContentStyles" style="margin: 0; text-align: left;" />' +
-    "    <span class='buttons'>";
-  if (!detachedDialog) {
+    "    <span class='buttons'  style = 'justify-content: space-around;' >";
+    if (!detachedDialog) {
+      markup +=
+      "      <button type='button' class='revealLeft-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>REVEAL</button>";
+    }
     markup +=
-    "      <button type='button' class='revealLeft-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>REVEAL</button>";
-  }
-  markup +=
-    "      <button type='button' class='openInAdminApp-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>ADMIN APP</button>";
-  if (party !== undefined && detachedDialog) {
-    markup +=
-      "    <button type='button' class='openInWebApp-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>JUMP TO WE VOTE</button>";
-  }
-  markup +=
-    "      <button type='button' class='deleteButton-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>DELETE</button>" +
-    "      <button type='button' class='saveButton-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>SAVE</button>" +
-    '    </span>' +
+      "      <button type='button' class='opendialogbox" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>ADD CANDIDATE</button>" +
+      '    </span>' +
     '  </div>' +
     '</div>';
+  }else{
+    markup =
+      "<div class='candidateWe " + candNo + "'>" +
+      "  <div id='unfurlable-" + i + "' class='" + (detachedDialog ? 'unfurlableDetached' : 'unfurlable') + "'>" +
+          unfurlableGrid(i, name, photo, party, office, description, inLeftPane, detachedDialog, stance, isStored, comment.trim().length > 0, false) +
+      "    <input type='hidden' id='candidateName-" + i + "' value='" + name + "'>" +
+      "    <input type='hidden' id='candidateWeVoteId-" + i + "' value='" + candidateWeVoteId + "'>" +
+      "    <input type='hidden' id='voterGuidePossibilityId-" + i + "' value='" + voterGuidePossibilityId + "'>" +
+      "    <input type='hidden' id='positionWeVoteId-" + i + "' value='" + positionWeVoteId + "'>" +
+      "    <input type='hidden' id='possibilityPositionId-" + i + "' value='" + possibilityPositionId + "'>" +
+      "    <input type='hidden' id='organizationWeVoteId-" + i + "' value='" + organizationWeVoteId + "'>" +
+      "    <input type='hidden' id='organizationName-" + i + "' value='" + organizationName + "'>" +
+      "    <input type='hidden' id='googleCivicElectionId-" + i + "' value='" + googleCivicElectionId + "'>" +
+      "    <input type='hidden' id='allNames-" + i + "' value='" + allNames + "'>" +
+      "    <input type='hidden' id='isStored-" + i + "' value='" + isStored + "'>" +
+      '  </div>' +
+      '  <div id=' + furlNo + " class='furlable' " + (detachedDialog ? '' : 'hidden') + '>' +
+      "    <div class='core-text aliases'>" + aliases + '</div>' +
+      "    <span class='buttons'>" +
+            supportButton(i, 'endorse', stance) +
+            supportButton(i, 'oppose', stance) +
+            supportButton(i, 'info', stance) +
+      '    </span>' +
+      "    <textarea rows='6' class='statementText-" + i + " removeContentStyles' style='margin: 0; text-align: left;'></textarea>" +
+      '    <br><span class="core-text" style="margin: 0; text-align: left;">If dedicated candidate page exists, enter URL here:</span>' +
+      '    <input type="text" class="moreInfoURL-' + i + ' weInfoText removeContentStyles" style="margin: 0; text-align: left;" />' +
+      "    <span class='buttons'>";
+    if (!detachedDialog) {
+      markup +=
+      "      <button type='button' class='revealLeft-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>REVEAL</button>";
+    }
+    markup +=
+      "      <button type='button' class='openInAdminApp-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>ADMIN APP</button>";
+    if (party !== undefined && detachedDialog) {
+      markup +=
+        "    <button type='button' class='openInWebApp-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>JUMP TO WE VOTE</button>";
+    }
+    markup +=
+      "      <button type='button' class='deleteButton-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>DELETE</button>" +
+      "      <button type='button' class='saveButton-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>SAVE</button>" +
+      '    </span>' +
+      '  </div>' +
+      '</div>';
+  }
   return markup;
 }
 
@@ -957,7 +1043,7 @@ function backgroundColor (stance, isStored) {
     return isStored ? colors.STORED_INFO_BACKGROUND : colors.POSS_INFO_BACKGROUND;
   }
 
-  return 'cyan';  // for debugging only
+  return 'yellow';  // for debugging only
 }
 /* eslint-enable no-undef */
 
@@ -970,7 +1056,7 @@ function greyAllPositionPanes (booleanGreyIt) {
 }
 
 function selectOneDeselectOthers (type, targetFurl) {
-  let buttons = $(targetFurl).find(':button');
+  let buttons = $(parent.document).find(targetFurl).find(':button');
   buttons.each((i, but) => {
     const { className } = but; // "infoButton-2 weButton removeContentStyles deselected"
     // eslint-disable-next-line prefer-destructuring
@@ -999,7 +1085,7 @@ async function saveUpdatedCandidatePossiblePosition (event, removePosition, deta
   // eslint-disable-next-line prefer-destructuring
   const number = targetFurl.match(/-(\d*)\s/)[1];
   const buttonContainerId = detachedDialog ? '#1000' : '#furlable-' + number;
-  const buttons = $(buttonContainerId).find(':button');
+  const buttons = $(parent.document).find(buttonContainerId).find(':button');
   let stance = 'NO_STANCE';
   const remove = removePosition;
 
@@ -1015,11 +1101,11 @@ async function saveUpdatedCandidatePossiblePosition (event, removePosition, deta
     }
   });
 
-  const itemName = detachedDialog ? $('.candidateNameInput-1000').val() : '';
-  const voterGuidePossibilityPositionId = detachedDialog ? 0 : $('#possibilityPositionId-' + number).val();
-  const statementText = $('.statementText-' + number).val().trim();
-  const moreInfoURL = $('.moreInfoURL-' + number).val().trim();
-  const isStored =  $('.isStored-' + number).val();
+  const itemName = detachedDialog ? $(parent.document).find('.candidateNameInput-1000').val() : '';
+  const voterGuidePossibilityPositionId = detachedDialog ? 0 : $(parent.document).find('#possibilityPositionId-' + number).val();
+  const statementText = $(parent.document).find('.statementText-' + number).val().trim();
+  const moreInfoURL = $(parent.document).find('.moreInfoURL-' + number).val().trim();
+  const isStored =  $(parent.document).find('.isStored-' + number).val();
   // Since we might have changed the stance and/or comment, update the right icon in the unfurlable grid
   const inLeftPane = true;
   const iconOnly = true;
@@ -1052,7 +1138,7 @@ async function saveUpdatedCandidatePossiblePosition (event, removePosition, deta
     } else {
       debugFgLog(remove);
       if (remove) {
-        $(`.candidateWe-${number}`).remove();
+        $(parent.document).find(`.candidateWe-${number}`).remove();
       } else {
         const furlables = $('.furlable');
         const thisDiv = $('#furlable-' + number);
@@ -1080,7 +1166,7 @@ async function saveUpdatedCandidatePossiblePosition (event, removePosition, deta
     // 9/26/19:  The messaging all works, but the dom in the iframe is inaccessible at this point, will go with the
     // iframe reload (within getRefreshedHighlights) as a work around for now.
     // removeAllHighlights();
-
+    updatePositionPanelUnconditionally();
     getRefreshedHighlights();
   });
 }
@@ -1100,20 +1186,21 @@ async function unfurlOnePositionPane (event, forceNumber) {
     targetFurl = '#' + targetCand.replace('candidateWe candidateWe', 'furlable');
     number = targetFurl.substring(targetFurl.indexOf('-') + 1);
     let selectorForName = '#' + event.currentTarget.classList[1].replace('candidateWe', 'candidateName');
-    let candidateName = $(selectorForName).val();
+    let candidateName = $(parent.document).find(selectorForName).val();
     let selectorForAllNames = '#' + event.currentTarget.classList[1].replace('candidateWe', 'allNames');
-    let allNames = $(selectorForAllNames).val();
+    let allNames = $(parent.document).find(selectorForAllNames).val();
     await updateGlobalState({ candidateName: candidateName, allNames: allNames });
   }
-  const element = document.getElementById('unfurlable-' + number);
+  // window.parent.focus();
+  const element = parent.document.getElementById('unfurlable-' + number);
   element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' }); // alignTioTop
-  $(targetFurl)[0].scrollIntoView();
+  $(parent.document).find(targetFurl)[0].scrollIntoView();
   addHandlersForCandidatePaneButtons(targetFurl, number, false);
-  $(targetFurl).removeAttr('hidden');
+  $(parent.document).find(targetFurl).removeAttr('hidden');
 }
 
 function addHandlersForCandidatePaneButtons (targetDiv, number, detachedDialog) {
-  let buttons = $(targetDiv).find(':button');
+  let buttons = $(parent.document).find(targetDiv).find(':button');
   buttons.each((i, but) => {
     const { className } = but;
     if (className.startsWith('endorse')) {
@@ -1137,7 +1224,7 @@ function addHandlersForCandidatePaneButtons (targetDiv, number, detachedDialog) 
 
         let aliases = allNames.split(',');
         for (let i = 0; i < aliases.length; i++) {
-          const emphasizedElement = $('#frame:first').contents().find(':contains(' + aliases[i] + '):last');
+          const emphasizedElement = $(parent.document).find('#frame:first').contents().find(':contains(' + aliases[i] + '):last');
           if (emphasizedElement.length) {
             $(emphasizedElement)[0].scrollIntoView({
               behavior: 'smooth',
@@ -1170,6 +1257,12 @@ function addHandlersForCandidatePaneButtons (targetDiv, number, detachedDialog) 
         let removePosition = true;
         saveUpdatedCandidatePossiblePosition(event, removePosition, detachedDialog);
       });
+    } else if (className.startsWith('opendialogbox' + number)) {
+      $(but).click(async (event) => {
+        event.stopPropagation();
+        let candidateName = $(parent.document).find('#candidateName-' + number).val();
+        await openSuggestionPopUp(candidateName);
+      });
     } else if (className.startsWith('saveButton')) {
       $(but).click((event) => {
         const removePosition = false;
@@ -1181,7 +1274,7 @@ function addHandlersForCandidatePaneButtons (targetDiv, number, detachedDialog) 
 }
 
 function deactivateActivePositionPane () {
-  const visibleElements = $('.furlable:visible');
+  const visibleElements = $(parent.document).find('.furlable:visible');
   if (visibleElements.length > 0) {
     console.log('CLICKED: candidateWe then deactivateActivePositionPane: ');
 
@@ -1189,9 +1282,9 @@ function deactivateActivePositionPane () {
     // eslint-disable-next-line prefer-destructuring
     let visibleElement = visibleElements[0];
     let visibleElementId = visibleElement.id;
-    let buttons = $('#' + visibleElementId + ' :button');
+    let buttons = $(parent.document).find('#' + visibleElementId + ' :button');
     buttons.unbind();
-    $('#' + visibleElementId).attr('hidden', true);
+    $(parent.document).find('#' + visibleElementId).attr('hidden', true);
     debugFgLog('deactivateActivePositionPane() buttons: ', buttons);  // Do not remove
   } else {
     debugFgLog('deactivateActivePositionPane() -- No open panes');    // Do not remove
@@ -1417,9 +1510,9 @@ function isParentFurlable (target) {
 }
 
 function attachClickHandlers () {
-  //debugFgLog("attachClickHandlers", $('div.candidateWe').length);
+//debugFgLog("attachClickHandlers", $('div.candidateWe').length);
 
-  $('div.candidateWe').click((event) => {
+  $(parent.document).find('div.candidateWe').click((event) => {
     // console.log('CLICKED: div.candidateWe clicked, target: ', event.target);
     if (!isParentFurlable(event.target)) {
       deactivateActivePositionPane();
