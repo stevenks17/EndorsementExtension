@@ -1,4 +1,4 @@
-/* global $, markupForThumbSvg, extensionSignInPage, addCandidateExtensionWebAppURL, colors, getPhotoURL,
+/* global $, markupForThumbSvgWithTooltips, extensionSignInPage, addCandidateExtensionWebAppURL, colors, getPhotoURL,
    chrome, updateGlobalState, getGlobalState, getVoterDeviceId, sendGetStatus, debugFgLog, addElementToPositions,
    saveCurrentEndorsements, editCandidateExtensionWebAppURL, getCurrentEndorsements
 */
@@ -968,11 +968,28 @@ function candidatePaneMarkup (candNo, furlNo, i, candidate, detachedDialog) {
 // eslint-disable-next-line complexity
 function unfurlableGrid (index, name, photo, party, office, description, inLeftPane, detachedDialog, stance, isStored, showComment, iconOnly) {
   let iconContainer = '';
+  const warningTooltip = 'Candidate not found on this web page';
+
+  let typeStance;
+  switch (stance) {
+    case 'SUPPORT':
+      typeStance = isStored ? 'STORED_SUPPORT' : 'POSSIBILITY_SUPPORT';
+      break;
+    case 'OPPOSE':
+      typeStance = isStored ? 'STORED_OPPOSE' : 'POSSIBILITY_OPPOSE';
+      break;
+    case 'INFO':
+      typeStance = isStored ? 'STORED_INFO' : 'POSSIBILITY_INFO';
+      break;
+    default:
+      typeStance = 'DEFAULT'; // Adjust as necessary
+  }
 
   if (!detachedDialog && !inLeftPane) {
     iconContainer =
       '<div id="iconContainer-' + index + '" class="iconContainer">' +
       '  <svg class="warningSvg">' +
+      '    <title>' + warningTooltip + '</title>' + 
       '    <path d="M0 0h24v24H0z" fill="none"/>' +
       '    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>' +
       '  </svg>' +
@@ -980,7 +997,6 @@ function unfurlableGrid (index, name, photo, party, office, description, inLeftP
   }
 
   // eslint-disable-next-line no-nested-ternary
-  const type = (stance === 'OPPOSE') ? 'oppose' : 'endorse';
   const showThumb = stance !== 'NO_STANCE';
   const showSomething = !detachedDialog;
   const showBar = showThumb && showComment;
@@ -993,8 +1009,15 @@ function unfurlableGrid (index, name, photo, party, office, description, inLeftP
     iconContainer +=
         '<div id="iconContainer-' + index + '" class="iconContainer ' + showOnlyClass + '" style="background-color:' + backgroundColor(stance, isStored) + '">';
     if (showThumb) {
-      iconContainer += markupForThumbSvg ('thumbIconSVG', type, 'white');
+      let type = ''; 
+      if (typeStance.includes('SUPPORT')) {
+        type = 'endorse';
+      } else if (typeStance.includes('OPPOSE')) {
+        type = 'oppose';
+      }
+      iconContainer += markupForThumbSvgWithTooltips('thumbIconSVG', type, 'white', typeStance);
     }
+        
     if (showBar) {
       iconContainer +=
         '  <div style="transform: translate(19px, -19px); color: white; font-size: 10pt; background-color:' + backgroundColor(stance, isStored) + '; width: 2px;">&#124;</div>';
@@ -1462,7 +1485,7 @@ function supportButton (i, type, stance) {
   }
 
   let markup = "<button type='button' class='" + type + 'Button-' + i + ' weButton removeContentStyles ' + selectionStyle + "'>";
-  markup += markupForThumbSvg('supportButtonSVG', type, fillColor);
+  markup += markupForThumbSvgWithTooltips('supportButtonSVG', type, fillColor);
   markup += "<span class='" + textClass + "'>" + buttonText + '</span></button>';
 
   return markup;
