@@ -330,11 +330,13 @@ async function initializeTabWordHighlighter () {
       });
     }
 
-  if (href !== 'about:blank') {  // Avoid worthless queries
-    setTimeout(async () => {
-      // time to DOMContentLoaded takes 300 to 900ms on a 1.1Ghz Dual-Core Intel, and 39ms on an Apple M1 Max 10 core.  getStatus fails on Intel without this delay
-      await sendGetStatus();  // Initial get status
-    }, navigator.hardwareConcurrency >= 10 ? 0 : 1500);  // Timers like this are the last resort
+  function delay(duration) {
+    return new Promise(resolve => setTimeout(resolve, duration));
+  }
+
+  if (href !== 'about:blank') {  
+    await delay(navigator.hardwareConcurrency >= 10 ? 0 : 1500);
+    await sendGetStatus();  
   }
 }
 
