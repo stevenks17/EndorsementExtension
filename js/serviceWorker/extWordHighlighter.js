@@ -256,25 +256,32 @@ function getColor (typeStance, foreground) {
   }
 }
 
-function getIcon (typeStance) {
+function getIcon(typeStance) {
+  let iconType;
+  if (typeStance.includes("SUPPORT") || typeStance === 'STORED_INFO') {
+    iconType = 'endorse';
+  } else if (typeStance.includes("OPPOSE")) {
+    iconType = 'oppose';
+  } else {
+    iconType = ''; 
+  }
+
   switch (typeStance) {
     case 'POSSIBILITY_SUPPORT':
-      return markupForThumbSvg('thumbIconSVGContent', 'endorse', getColor (typeStance, true));
-    case 'POSSIBILITY_OPPOSE':
-      return markupForThumbSvg('thumbIconSVGContent', 'oppose',  getColor (typeStance, true));
-    case 'POSSIBILITY_INFO':
-      return '';
     case 'STORED_SUPPORT':
-      return markupForThumbSvg('thumbIconSVGContent', 'endorse', getColor (typeStance, true));
+      return markupForThumbSvgWithTooltips('thumbIconSVGContent', iconType, getColor(typeStance, true), typeStance);
+    case 'POSSIBILITY_OPPOSE':
     case 'STORED_OPPOSE':
-      return markupForThumbSvg('thumbIconSVGContent', 'oppose',  getColor (typeStance, true));
+      return markupForThumbSvgWithTooltips('thumbIconSVGContent', iconType, getColor(typeStance, true), typeStance);
+    case 'POSSIBILITY_INFO':
     case 'STORED_INFO':
-      return '';
+      return markupForThumbSvgWithTooltips('thumbIconSVGContent', 'info', getColor(typeStance, true), typeStance);
     case 'DELETED':
-      return '';
+      return ''; 
     case 'DEFAULT':
+      return ''; 
     default:
-      return '';
+      return ''; 
   }
 }
 
