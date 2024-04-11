@@ -33,7 +33,7 @@ async function displayHighlightingAndPossiblyEditor (showHighlights, showPanels,
   try {
     if (showHighlights) {
       debugFgLog('displayHighlightingAndPossiblyEditor ----- for tab: ' + tabId);
-      getHighlights(showHighlights, showPanels, tabId);   // Calls BuildUI when the API query completes
+      await getHighlights(showHighlights, showPanels, tabId);   // Calls BuildUI when the API query completes
     } else if (isInOurIFrame()) { // Disable UI (reload the page)
       debugFgLog('Unloading displayHighlightingAndPossiblyEditor as requested from popup (before reload) in iFrame----- for tab: ' + tabId);
       location.reload();
