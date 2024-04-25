@@ -1,4 +1,4 @@
-/* global chrome, $ */
+/* global chrome, $, AbortController */
 /* eslint-disable no-undef */
 
 // Debug settings
@@ -17,6 +17,30 @@ let pdfURL = null;
 Jan 2023:  We have converted the extension to use Chrome Extension Manifest V3 (API V3)
 WE NO LONGER CAN USE chrome.runtime.getBackgroundPage() or chrome.runtime.sendMessage() -- The V3 Chrome documentation is incorrect and outdated, and these no longer work
 */
+
+// Promise management
+const promiseRegistry = new Set();
+
+function registerPromise(promise) {
+  promiseRegistry.add(promise);
+  return promise.finally(() => {
+    promiseRegistry.delete(promise);
+  });
+}
+
+function cancelAllPromises() {
+  promiseRegistry.forEach(promise => {
+    if (promise.cancel) promise.cancel();
+  });
+  promiseRegistry.clear();
+}
+
+async function safeAsyncFunction(asyncFn, ...args) {
+  const abortCtrl = new AbortController();
+  const promise = asyncFn(...args, { signal: abortCtrl.signal });
+  promise.cancel = () => abortCtrl.abort();
+  return registerPromise(promise);
+}
 
 // When popup.html is loaded by clicking on the WeVote "W" icon as specified in the manifest.json
 document.addEventListener('DOMContentLoaded', function () {
@@ -135,22 +159,21 @@ document.addEventListener('DOMContentLoaded', function () {
       $('#allEndorsementsButton').
         text(organizationName && organizationName.length ? 'Endorsements:   ' + organizationName : 'Endorsements').
         prop('disabled', false).
-        removeClass('weButtonDisable').
-        click(() => window.open(urlWebApp, '_blank'));
+        removeClass('weButtonDisable')
+        .click(() => window.open(urlWebApp, '_blank'));
     } else {
       const orgName = organizationName ? organizationName.toUpperCase() : '';
       $('#allEndorsementsButton').
         text('ENDORSEMENTS' + orgName).
         prop('disabled', true).
-        addClass('weButtonDisable').
-        unbind();
+        addClass('weButtonDisable')
+        .unbind();
     }
   }
 
   function addButtonListeners (tabId, url) {
-    // Reset the highlighted tab
-    $('#resetThisTabButton').click(() => {
-      chrome.action.setBadgeText({text: ''});
+// Reset the highlighted tab   
+$('#resetThisTabButton').click(() => {
       console.log('addButtonListeners resetThisTabButton hardResetActiveTab click tabId', tabId);
       console.log('hardResetActiveTab popup.js location: ', location);
       logFromPopup (tabId, 'sending hardResetActiveTab');
@@ -159,18 +182,20 @@ document.addEventListener('DOMContentLoaded', function () {
         payload: {
           tabUrl: url,
         }
-      }, async function () {
+      }, async  () => {
         console.log(lastError ? `resetThisTabButton lastError ${lastError.message}` : 'resetThisTabButton returned');
-        const state = await reInitializeGlobalState(url);
-        debugStorage('#resetThisTabButton response state:', state);
-        // const state = await getGlobalState();
+        cancelAllPromises();
+        await reInitializeGlobalState(url);
         await updateButtonDisplayedState();
-        setBadgeText({text: ''});
+        addButtonListeners(tabId, url); 
+        chrome.action.setBadgeText({text: ''});
+        chrome.tabs.reload(tabId, {}, () => {
+          chrome.runtime.reload(); 
+          setTimeout(() => {
+              window.close();
+          }, 1000);
       });
-      // WV-202 fix: add a timeout so the modal closes after clicking Reset
-      setTimeout(() => {
-        closeDialogAfterTimeout && window.close();
-      }, 1000);
+      });
     });
 
     // Highlight Candidates on This Tab
