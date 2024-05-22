@@ -654,7 +654,7 @@ async function handleUpdatedOrNewPositions (update, fromIFrame, preLoad, dialogC
       }
       debugFgLog('RESPONSE in contentWeVoteUI > handleUpdatedOrNewPositions() getPositions, response:', response);
       debugFgLog('handleUpdatedOrNewPositions() response', response);
-      if ((response && Object.entries(response).length > 0) && (response.data !== undefined) && (response.data.length > 0)) {
+      if (response && (response.data !== undefined)) {
         let {data} = response;
         // debugFgLog('--------------- handleUpdatedOrNewPositions: booleans, response and previous', update, fromIFrame, preLoad, data, priorData);
         urlToQuery = window.location.href;

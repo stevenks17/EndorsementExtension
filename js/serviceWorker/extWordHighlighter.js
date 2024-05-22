@@ -94,7 +94,7 @@ function combineHighlightsLists (voterGuideHighlights) {
   for (let i = 0; i < voterGuideHighlights.length; i++) {
     let highlight = voterGuideHighlights[i];
     const {we_vote_id: weVoteId, name, display} = highlight;
-    if (name && name.length > 2 && display=== 'DEFAULT' && !Object.values(nameToIdMap).includes(weVoteId)) {
+    if (name && name.length > 2 && display=== 'DEFAULT' &&  (!Object.values(nameToIdMap).includes(weVoteId) || weVoteId == '' )) {
       nameToIdMap[name.toLowerCase()] = weVoteId;
       highlight.display = 'DEFAULT';
       highlight.stance = '';      
