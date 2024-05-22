@@ -611,14 +611,13 @@ chrome.runtime.onMessage.addListener(
       showCandidateOptionsHighlights = false;
       getHighlightsListsFromApiServer(request.url, request.voterDeviceId, request.tabId, request.doReHighlight, sendResponse, showVoterGuideHighlights, showCandidateOptionsHighlights,request.pageContent);
     }
-    // This action commented out as a fix for the defect WV-319
-    // else if (request.command === 'getCombinedHighlights') {
-    //   // Highlight the captured positions AND the recognized candidate names
-    //   console.log('request.command:', request.command);
-    //   showVoterGuideHighlights = true;
-    //   showCandidateOptionsHighlights = true;
-    //   getHighlightsListsFromApiServer(request.url, request.voterDeviceId, request.tabId, request.doReHighlight, sendResponse, showVoterGuideHighlights, showCandidateOptionsHighlights,request.pageContent);
-    // }
+    else if (request.command === 'getCombinedHighlights') {
+      // Highlight the captured positions AND the recognized candidate names
+      console.log('request.command:', request.command);
+      showVoterGuideHighlights = true;
+      showCandidateOptionsHighlights = true;
+      getHighlightsListsFromApiServer(request.url, request.voterDeviceId, request.tabId, request.doReHighlight, sendResponse, showVoterGuideHighlights, showCandidateOptionsHighlights,request.pageContent);
+    }
     else if (request.command === 'getPositions') {
       console.log('getPositions received with request ', request);
       getPossiblePositions(request.voterGuidePossibilityId, request.hrefURL, request.voterDeviceId, request.isIFrame, sendResponse);
