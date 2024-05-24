@@ -55,10 +55,11 @@ constructionT0 = -1;
   constructionT0 = performance.now();
 })();
 
-chrome.alarms.create({ periodInMinutes: 0.3 })
-chrome.alarms.onAlarm.addListener(() => {
-  return;
-});
+// 5/22/24 This seemed like an experiment that did nothing, and would have required additional permissions from the Chrome store, so I commented it out
+// chrome.alarms.create({ periodInMinutes: 0.3 })
+// chrome.alarms.onAlarm.addListener(() => {
+//   return;
+// });
 
 function getWordsInGroup (groupName, highlightsList) {
   // eslint-disable-next-line prefer-destructuring
@@ -97,7 +98,7 @@ function combineHighlightsLists (voterGuideHighlights) {
     if (name && name.length > 2 && display=== 'DEFAULT' &&  (!Object.values(nameToIdMap).includes(weVoteId) || weVoteId == '' )) {
       nameToIdMap[name.toLowerCase()] = weVoteId;
       highlight.display = 'DEFAULT';
-      highlight.stance = '';      
+      highlight.stance = '';
     } else {
       debugSwLog('Bad highlight received in promoteAliases ', highlight);
     }
@@ -263,7 +264,7 @@ function getIcon(typeStance) {
   } else if (typeStance.includes("OPPOSE")) {
     iconType = 'oppose';
   } else {
-    iconType = ''; 
+    iconType = '';
   }
 
   switch (typeStance) {
@@ -277,11 +278,11 @@ function getIcon(typeStance) {
     case 'STORED_INFO':
       return markupForThumbSvgWithTooltips('thumbIconSVGContent', 'info', getColor(typeStance, true), typeStance);
     case 'DELETED':
-      return ''; 
+      return '';
     case 'DEFAULT':
-      return ''; 
+      return '';
     default:
-      return ''; 
+      return '';
   }
 }
 

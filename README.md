@@ -134,6 +134,12 @@ menu item.
 In macOS, in finder, just select your working directory (something like `/Users/stevepodell/WebstormProjects/EndorsementExtension
 `) right click on it, and choose `Compress "Endorsement Extension"` which creates an `EndorsementExtension.zip` file.
 
+If that zip file is not accepted by Chrome Web Store Developer Dashboard, manually make the zip file:
+
+    stevepodell@Steves-MBP-M1-Dec2021 EndorsementExtension % cd ..
+    stevepodell@Steves-MBP-M1-Dec2021 WebstormProjects % zip -r EndorsementExtension.zip EndorsementExtension
+
+
 Get the login credentials for chrome@wevoteeducation.org from Dale.
 
 Login to the Chrome developer console [https://chrome.google.com/webstore/developer/edit/eofojjpbgfdogalmibgljcgdipkhoclc?authuser=3](https://chrome.google.com/webstore/developer/edit/eofojjpbgfdogalmibgljcgdipkhoclc?authuser=3)
