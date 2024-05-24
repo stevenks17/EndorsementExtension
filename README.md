@@ -134,7 +134,7 @@ menu item.
 In macOS, in finder, just select your working directory (something like `/Users/stevepodell/WebstormProjects/EndorsementExtension
 `) right click on it, and choose `Compress "Endorsement Extension"` which creates an `EndorsementExtension.zip` file.
 
-If that zip file is not accepted by Chrome Web Store Developer Dashboard, manually make the zip file:
+If that zip file is not accepted by Chrome Web Store Developer Dashboard, you can manually make the zip file:
 
     stevepodell@Steves-MBP-M1-Dec2021 EndorsementExtension % cd ..
     stevepodell@Steves-MBP-M1-Dec2021 WebstormProjects % zip -r EndorsementExtension.zip EndorsementExtension
@@ -157,7 +157,7 @@ will see a dialog that says something like "Your item is in the process of being
 
 ### Note May 2020
 
-**Do not release a new version from the new console, it makes a compeletely new chrome store entry with a new id, 
+**Do not release a new version from the new console, it makes a completely new chrome store entry with a new id, 
 which will not match **
             if (sender.id === 'pmpmiggdjnjhdlhgpfcafbkghhcjocai' ||
                 sender.id === 'lfifjogjdncflocpmhfhhlflgndgkjdo' ||

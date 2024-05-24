@@ -1,49 +1,49 @@
-/* global chrome, $, AbortController */
+/* global chrome, $ */
 /* eslint-disable no-undef */
 
 // Debug settings
 const closeDialogAfterTimeout = true;
-const showTabAndWindowInPopup = true;
 // Other constants and variables
-const removeEditText = "Remove Edit Panel From This Tab";
-const openEditText = "Open Edit Panel for this Tab";
-const openEditTextConvertedPDF = "Open Edit Panel for this PDF";
-const highlightThisText = "Highlight Candidates on This Tab";
-const highlightThisPDF = "Highlight Candidates found on this PDF";
-const removeHighlightThisText = "Remove Highlights From This Tab";
+const removeEditText = 'Remove Edit Panel From This Tab';
+const openEditText = 'Open Edit Panel for this Tab';
+const openEditTextConvertedPDF = 'Open Edit Panel for this PDF';
+const highlightThisText = 'Highlight Candidates on This Tab';
+const highlightThisPDF = 'Highlight Candidates found on this PDF';
+const removeHighlightThisText = 'Remove Highlights From This Tab';
 let pdfURL = null;
 
 /*
 Jan 2023:  We have converted the extension to use Chrome Extension Manifest V3 (API V3)
-WE NO LONGER CAN USE chrome.runtime.getBackgroundPage() or chrome.runtime.sendMessage() -- The V3 Chrome documentation is incorrect and outdated, and these no longer work
+WE NO LONGER CAN USE chrome.runtime.getBackgroundPage() or chrome.runtime.sendMessage(), but we can use (chrome.tabs.sendMessage)
+The V3 Chrome documentation is incorrect and outdated, and these older apis no longer work
 */
 
 // Promise management
 const promiseRegistry = new Set();
 
-function registerPromise(promise) {
+function registerPromise (promise) {
   promiseRegistry.add(promise);
   return promise.finally(() => {
     promiseRegistry.delete(promise);
   });
 }
 
-function cancelAllPromises() {
-  promiseRegistry.forEach(promise => {
+function cancelAllPromises () {
+  promiseRegistry.forEach((promise) => {
     if (promise.cancel) promise.cancel();
   });
   promiseRegistry.clear();
 }
 
 // When popup.html is loaded by clicking on the WeVote "W" icon as specified in the manifest.json
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener('DOMContentLoaded', function () {
   const {
     chrome: {
       tabs: { sendMessage, lastError, query },
       action: { setBadgeText },
     },
   } = window;
-  console.log("hello from popup");
+  console.log('hello from popup');
 
   // The DOM is loaded, now get the active tab number
   query(
@@ -54,32 +54,32 @@ document.addEventListener("DOMContentLoaded", function () {
     async function (tabs) {
       const [tab] = tabs;
       const { id: tabId, windowId, url } = tab;
-      console.log("hello from after tabs query tab tabId", tabId, tab);
-      logFromPopup(
-        tabId,
-        "Initial message after getting active tabId: " + tabId
-      );
-      console.log("after first log response", tabId);
+      console.log('hello from after tabs query tab tabId = ', tabId, ' tab = ', tab);
+
+      // await logFromPopup(tabId, ('tabId Initial message after getting active tabId: ' + tabId));
+      console.log('after first log response', tabId);
       setupEventListeners(tabId, url);
       addButtonListeners(tabId, url);
-      console.log("after addButtonListeners", tabId);
+      console.log('after addButtonListeners', tabId);
 
       const statePromise = registerPromise(getGlobalState());
-      statePromise.then(state => {
+      await statePromise.then((state) => {
         const lastDate = new Date(state.lastStateChange);
-        const lastPlus12 = new Date(lastDate.getTime() + 12 * 60 * 60 * 1000);
-
+        const lastPlus12 = new Date(lastDate.getTime() + (12 * 60 * 60 * 1000));
+        // console.log('tabId getGlobalState tabId = ', tabId, ' state.tabId ', state.tabId);
         if (
           state.tabId !== tabId ||
           state.url !== url ||
           lastPlus12 < new Date()
         ) {
           console.log(
-            "Detected changes or outdated state, reinitializing global state."
+            'Detected changes or outdated state, reinitializing global state.'
           );
-          const initPromise = registerPromise(reInitializeGlobalState(url));
+          const initPromise = registerPromise(reInitializeGlobalState(''));
           initPromise.then(() => {
-            const isFromPDF = url.toLowerCase().endsWith(".pdf");
+            const isFromPDF = url.toLowerCase().endsWith('.pdf');
+            // console.log('tabId in document.addEventListener(\'DOMContentLoaded tabId =', tabId, ' state.tabId', state.tabId);
+
             const updateStatePromise = registerPromise(
               updateGlobalState({
                 tabId,
@@ -90,13 +90,13 @@ document.addEventListener("DOMContentLoaded", function () {
               })
             );
             updateStatePromise.then(() => {
-              console.log("Updated global state after reinitialization.");
+              console.log('Updated global state after reinitialization.');
               updateUI(tabId, windowId, url);
             });
           });
         } else {
           console.log(
-            "No significant changes detected. Preserving current state."
+            'No significant changes detected. Preserving current state.'
           );
           updateUI(tabId, windowId, url);
         }
@@ -104,9 +104,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   );
 
-  function updateUI(tabId, windowId, url) {
-    $("#tabNumber").text(tabId.toString());
-    const urlParts = url.split("/");
+  function updateUI (tabId, windowId, url) {
+    $('#tabNumber').text(tabId.toString());
+    const urlParts = url.split('/');
     let formattedUrl = url;
     if (urlParts.length > 4) {
       formattedUrl = `${urlParts[2]} / ${urlParts[3]}`;
@@ -115,58 +115,15 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
 
-    $("#windowNumber").text(windowId.toString());
-    $("#hostName").text(formattedUrl);
+    $('#windowNumber').text(windowId.toString());
+    $('#hostName').text(formattedUrl);
     updateButtonDisplayedState();
   }
-  // console.log('state: ' + state.tabId + ' ->' + tabId + ' :: ' +
-  //   state.windowId + ' ->' + windowId + ' :: ' +
-  //   state.url + ' ->' + url);
-  // const lastDate = new Date(state.lastStateChange);
-  // const lastPlus12 = lastDate.setHours(lastDate.getHours() + 12);
-  // if (state.tabId !== tabId || /* state.windowId !== windowId ||*/ state.url !== url || lastPlus12 < Date.now()) {
-  //   console.log('RESETTING STORAGE DUE TO TAB CHANGE OR OUTDATED STORAGE ', state.tabId, tabId, state.windowId, windowId, state.url, url, lastPlus12, Date.now());
-  //   await reInitializeGlobalState(url);
-  //   let isFromPDF = false;
-  //   if (url && url.length > 5) {
-  //     isFromPDF = url.toLowerCase().endsWith('.pdf');
-  //   }
-  //   await updateGlobalState({
-  //     tabId: tabId,
-  //     windowId: windowId,
-  //     url: url,
-  //     isFromPDF: isFromPDF,
-  //     lastStateChange: Date.now(),
-  //   });
-  //   debugStorage('reinitialized state tabId: ' + tabId + ', windowId ' + windowId + ', url: ' + url);
-  //   logFromPopup (tabId, '--------------- reinitialized state tabId: ' + tabId + ', windowId ' + windowId + ', url: ' + url);
-  //   chrome.action.setBadgeText({text: ''});
-  // } else {
-  //   debugStorage('PRESERVING STORAGE ON POPUP OPEN');
-  // }
-  // await updateButtonDisplayedState();
 
-  //   $('#tabNumber').text(tabId.toString());
-  //   const bits = url.split('/');
-  //   let u = url;
-  //   if (bits.length > 4) {
-  //     u = bits[2] + ' /' + bits[3];
-  //   }
-  //   if (bits.length > 5) {
-  //     u += '/' + bits[4];
-  //   }
-  //   if (showTabAndWindowInPopup) {
-  //     $('#windowNumber').text(windowId.toString());
-  //     $('#hostName').text(u);
-  //   } else {
-  //     $('.tabReportDiv').attr('hidden', true);
-  //   }
-  // });
-
-  async function updateButtonDisplayedState() {
+  async function updateButtonDisplayedState () {
     const statePromise = registerPromise(getGlobalState());
-    statePromise
-      .then(state => {
+    await statePromise.
+      then((state) => {
         const {
           organizationName,
           organizationWeVoteId,
@@ -175,13 +132,14 @@ document.addEventListener("DOMContentLoaded", function () {
           showHighlights,
           showPanels,
         } = state;
+        // console.log('tabId updateButtonDisplayedState getGlobalState tabId = ', tabId, ' state.tabId ', state.tabId);
 
-        const isPDF = url.toLowerCase().endsWith(".pdf");
+        const isPDF = url.toLowerCase().endsWith('.pdf');
         if (isPDF) {
           if (!state.voterIsSignedIn) {
-            $(".notLoggedInWarning").css("display", "unset");
-            $("#highlightCandidatesThisTabButton").css("display", "none");
-            $("#openEditPanelButton").css("display", "none");
+            $('.notLoggedInWarning').css('display', 'unset');
+            $('#highlightCandidatesThisTabButton').css('display', 'none');
+            $('#openEditPanelButton').css('display', 'none');
             return;
           }
         }
@@ -192,89 +150,72 @@ document.addEventListener("DOMContentLoaded", function () {
           organizationWeVoteId,
           organizationTwitterHandle
         );
-      })
-      .catch(error => {
-        console.error("Failed to update button state:", error);
+      }).catch((error) => {
+        console.error('Failed to update button state:', error);
       });
   }
 
-  function updateButtonsBasedOnState(showHighlights, showPanels, isPDF) {
+  function updateButtonsBasedOnState (showHighlights, showPanels, isPDF) {
     if (showHighlights) {
-      $("#highlightCandidatesThisTabButton")
-        .addClass("weButtonRemove")
-        .removeClass("wePDF")
-        .text(removeHighlightThisText);
+      $('#highlightCandidatesThisTabButton').addClass('weButtonRemove').removeClass('wePDF').text(removeHighlightThisText);
     } else if (isPDF) {
-      $("#highlightCandidatesThisTabButton")
-        .removeClass("weButtonRemove")
-        .addClass("wePDF")
-        .text(highlightThisPDF);
+      $('#highlightCandidatesThisTabButton').removeClass('weButtonRemove').addClass('wePDF').text(highlightThisPDF);
     } else {
-      $("#highlightCandidatesThisTabButton")
-        .removeClass("weButtonRemove")
-        .text(highlightThisText);
+      $('#highlightCandidatesThisTabButton').removeClass('weButtonRemove').text(highlightThisText);
     }
 
     if (showPanels) {
-      $("#openEditPanelButton").addClass("weButtonRemove").text(removeEditText);
+      $('#openEditPanelButton').addClass('weButtonRemove').text(removeEditText);
     } else if (isPDF) {
-      $("#openEditPanelButton")
-        .removeClass("weButtonRemove")
-        .text(openEditTextConvertedPDF);
+      $('#openEditPanelButton').removeClass('weButtonRemove').text(openEditTextConvertedPDF);
     } else {
-      $("#openEditPanelButton")
-        .removeClass("weButtonRemove")
-        .text(openEditText);
+      $('#openEditPanelButton').removeClass('weButtonRemove').text(openEditText);
     }
   }
 
-  function updateEndorsementsButton(
+  function updateEndorsementsButton (
     organizationName,
     organizationWeVoteId,
     organizationTwitterHandle
   ) {
     if (organizationWeVoteId || organizationTwitterHandle) {
       const urlWebApp = organizationTwitterHandle
-        ? "https://wevote.us/" + organizationTwitterHandle
-        : "https://wevote.us/voterguide/" + organizationWeVoteId;
-      $("#allEndorsementsButton")
-        .text(
-          organizationName && organizationName.length
-            ? "Endorsements: " + organizationName
-            : "Endorsements"
-        )
-        .prop("disabled", false)
-        .removeClass("weButtonDisable")
-        .off("click")
-        .on("click", () => window.open(urlWebApp, "_blank"));
+        ? 'https://wevote.us/' + organizationTwitterHandle
+        : 'https://wevote.us/voterguide/' + organizationWeVoteId;
+      $('#allEndorsementsButton').text(
+        organizationName && organizationName.length
+          ? 'Endorsements: ' + organizationName
+          : 'Endorsements'
+      ).prop('disabled', false).removeClass('weButtonDisable').off('click').on('click', () => window.open(urlWebApp, '_blank'));
     } else {
-      const orgName = organizationName ? organizationName.toUpperCase() : "";
-      $("#allEndorsementsButton")
-        .text("ENDORSEMENTS" + orgName)
-        .prop("disabled", true)
-        .addClass("weButtonDisable")
-        .off("click");
+      const orgName = organizationName ? organizationName.toUpperCase() : '';
+      $('#allEndorsementsButton').
+        text('ENDORSEMENTS' + orgName).
+        prop('disabled', true).
+        addClass('weButtonDisable').
+        off('click');
     }
   }
 
-  function setupEventListeners(tabId, url) {
-    $(document).on("click", "#resetThisTabButton", function () {
-      console.log("Resetting tab", tabId);
+  function setupEventListeners (tabId, url) {
+    $(document).on('click', '#resetThisTabButton', function () {
+      console.log('Resetting tab', tabId);
+
       sendMessage(
         tabId,
         {
-          command: "hardResetActiveTab",
+          command: 'hardResetActiveTab',
           payload: { tabUrl: url },
         },
         async () => {
           if (chrome.runtime.lastError) {
-            console.error("Reset tab error:", chrome.runtime.lastError.message);
+            console.error('Reset tab hardResetActiveTab error: ', chrome.runtime.lastError.message);
           } else {
-            console.log("Tab reset successfully");
+            console.log('Tab reset successfully');
             cancelAllPromises();
-            await registerPromise(reInitializeGlobalState(url));
+            await registerPromise(reInitializeGlobalState(''));
             await registerPromise(updateButtonDisplayedState());
-            chrome.action.setBadgeText({ text: "" });
+            setBadgeText({ text: '' });
             chrome.tabs.reload(tabId, {}, () => {
               chrome.runtime.reload();
               setTimeout(() => window.close(), 1000);
@@ -284,19 +225,16 @@ document.addEventListener("DOMContentLoaded", function () {
       );
     });
   }
-  function addButtonListeners(tabId, url) {
+  function addButtonListeners (tabId, url) {
     // Reset the highlighted tab
-    $("#resetThisTabButton").click(() => {
-      console.log(
-        "addButtonListeners resetThisTabButton hardResetActiveTab click tabId",
-        tabId
-      );
-      console.log("hardResetActiveTab popup.js location: ", location);
-      logFromPopup(tabId, "sending hardResetActiveTab");
+    $('#resetThisTabButton').click(() => {
+      console.log('addButtonListeners resetThisTabButton hardResetActiveTab click tabId', tabId);
+      console.log('hardResetActiveTab popup.js location: ', location);
+      logFromPopup(tabId, ('tabId sending hardResetActiveTab tabId = ', tabId));
       sendMessage(
         tabId,
         {
-          command: "hardResetActiveTab",
+          command: 'hardResetActiveTab',
           payload: {
             tabUrl: url,
           },
@@ -305,13 +243,13 @@ document.addEventListener("DOMContentLoaded", function () {
           console.log(
             lastError
               ? `resetThisTabButton lastError ${lastError.message}`
-              : "resetThisTabButton returned"
+              : 'resetThisTabButton returned'
           );
           cancelAllPromises();
-          await registerPromise(reInitializeGlobalState(url));
+          await registerPromise(reInitializeGlobalState(''));
           await registerPromise(updateButtonDisplayedState());
           // addButtonListeners(tabId, url);
-          chrome.action.setBadgeText({ text: "" });
+          setBadgeText({ text: '' });
           chrome.tabs.reload(tabId, {}, () => {
             chrome.runtime.reload();
             setTimeout(() => {
@@ -323,14 +261,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Highlight Candidates on This Tab
-    $("#highlightCandidatesThisTabButton").click(async () => {
-      console.log(
-        "addButtonListeners highlightCandidatesThisTabButton click tabId",
-        tabId
-      );
-      console.log("getGlobalState in popup 137");
+    $('#highlightCandidatesThisTabButton').click(async () => {
+      console.log('addButtonListeners highlightCandidatesThisTabButton click tabId', tabId);
       const statePromise = registerPromise(getGlobalState());
-      statePromise.then(async state => {
+      await statePromise.then(async (state) => {
         statePromise.then;
         const showHighlights = !state.showHighlights;
         const showPanels = false;
@@ -344,16 +278,13 @@ document.addEventListener("DOMContentLoaded", function () {
             tabId: tabId,
           });
         } else {
-          await reInitializeGlobalState("");
+          await reInitializeGlobalState('');
         }
-        // if (state.showHighlights) {
-        //   $('#highlightingMasterSwitch').prop('checked', true);
-        // }
-        logFromPopup(tabId, "sending updateForegroundForButtonChange");
+        logFromPopup(tabId, ('tabId in $(#highlightCandidatesThisTabButton).click( tabId =', tabId, ' state.tabId = ', state.tabId));
         sendMessage(
           tabId,
           {
-            command: "updateForegroundForButtonChange",
+            command: 'updateForegroundForButtonChange',
             payload: {
               isFromPDF,
               showPanels,
@@ -365,12 +296,8 @@ document.addEventListener("DOMContentLoaded", function () {
           },
           function (lastError) {
             if (lastError) {
-              console.log(
-                "updateForegroundForButtonChange 1 lastError",
-                lastError.message
-              );
+              console.log('updateForegroundForButtonChange 1 lastError', lastError.message);
             }
-            console.log("updateForegroundForButtonChange: ", lastError);
           }
         );
         await updateButtonDisplayedState();
@@ -382,20 +309,19 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Open Edit Panel For This Tab
-    const openEditPanelButtonSelector = $("#openEditPanelButton");
+    const openEditPanelButtonSelector = $('#openEditPanelButton');
     openEditPanelButtonSelector.click(async () => {
-      console.log("openEditPanelButton button onClick -- popup.js");
-      console.log("getGlobalState in popup 179");
-      let showPanels = false;
-      let showHighlights = false;
-      let newTabId = tabId;
-      const isFromPDF = pdfURL && pdfURL.length > 0;
+      console.log('openEditPanelButton button onClick -- popup.js');
+      // let showPanels = false;
+      // let showHighlights = false;
+      // let newTabId = tabId;
+      // const isFromPDF = pdfURL && pdfURL.length > 0;
 
       const statePromise = registerPromise(getGlobalState());
-      statePromise.then(async state => {
+      await statePromise.then(async (state) => {
         let showPanels = !state.showPanels;
         let showHighlights = showPanels; // Assuming that showing panels implies highlighting
-        const isFromPDF = pdfURL && pdfURL.endsWith(".pdf");
+        const isFromPDF = pdfURL && pdfURL.endsWith('.pdf');
 
         await registerPromise(
           updateGlobalState({
@@ -407,9 +333,9 @@ document.addEventListener("DOMContentLoaded", function () {
           })
         );
 
-        logFromPopup(tabId, "sending updateForegroundForButtonChange");
+        logFromPopup(tabId, ('tabId sending updateForegroundForButtonChange tabId = ' + tabId));
         sendMessage(tabId, {
-          command: "updateForegroundForButtonChange",
+          command: 'updateForegroundForButtonChange',
           payload: {
             isFromPDF,
             showPanels,
@@ -428,10 +354,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  function logFromPopup(tabId, message) {
+  function logFromPopup (tabId, message) {
     if (debugPopUpMessages) {
       sendMessage(tabId, {
-        command: "logFromPopup",
+        command: 'logFromPopup',
         payload: message,
       });
     }
