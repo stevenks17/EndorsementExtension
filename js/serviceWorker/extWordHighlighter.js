@@ -607,15 +607,19 @@ chrome.runtime.onMessage.addListener(
       getOrganizationFound(request.url, sendResponse);
     } else if (request.command === 'getHighlights') {
       // Highlight the captured positions
+      console.log('request.command:', request.command);
       showVoterGuideHighlights = true;
       showCandidateOptionsHighlights = false;
       getHighlightsListsFromApiServer(request.url, request.voterDeviceId, request.tabId, request.doReHighlight, sendResponse, showVoterGuideHighlights, showCandidateOptionsHighlights,request.pageContent);
-    } else if (request.command === 'getCombinedHighlights') {
+    }
+    else if (request.command === 'getCombinedHighlights') {
       // Highlight the captured positions AND the recognized candidate names
+      console.log('request.command:', request.command);
       showVoterGuideHighlights = true;
       showCandidateOptionsHighlights = true;
       getHighlightsListsFromApiServer(request.url, request.voterDeviceId, request.tabId, request.doReHighlight, sendResponse, showVoterGuideHighlights, showCandidateOptionsHighlights,request.pageContent);
-    } else if (request.command === 'getPositions') {
+    }
+    else if (request.command === 'getPositions') {
       console.log('getPositions received with request ', request);
       getPossiblePositions(request.voterGuidePossibilityId, request.hrefURL, request.voterDeviceId, request.isIFrame, sendResponse);
     } else if (request.command === 'savePosition') {

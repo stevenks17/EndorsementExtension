@@ -344,26 +344,37 @@ function voterGuidePossibilityPositionSave (itemName, voterGuidePossibilityId, v
   //  Enter the "possibility_position_id" into the "voter_guide_possibility_position_id" field in the try it now form
   //  Do not send empty values on the url, since that might clear out good data on the Python side
   //  Steve: voter_guide_possibility_position_id completely specifies the possibility and nothing else is needed for the search/match
+  //  Matt: WV-345 update, change method from GET to POST
   getVoterDeviceId().then((voterDeviceId) => {
     debugSwLog('ENTERING backgroundWeVoteAPICalls > voterGuidePossibilityPositionSave voterGuidePossibilityPositionId: ' + voterGuidePossibilityPositionId);
     if (voterDeviceId && voterDeviceId.length > 0) {
-      let apiURL = `${rootApiURL}/voterGuidePossibilityPositionSave/?voter_device_id=${voterDeviceId}` +
-        `&voter_guide_possibility_id=${voterGuidePossibilityId}&voter_guide_possibility_position_id=${voterGuidePossibilityPositionId}` +
-        `&position_stance=${stance}&possibility_should_be_deleted=${removePosition}`;
+      let apiURL = `${rootApiURL}/voterGuidePossibilityPositionSave/`;
+      const formData = new URLSearchParams();
       if (!removePosition) {
         if (itemName.length > 0) {
-          apiURL += `&ballot_item_name=${encodeURIComponent(itemName)}`;
+          formData.append('ballot_item_name', itemName);
         }
         if (statementText.length > 0) {
-          apiURL += `&statement_text=${encodeURIComponent(statementText)}`;
+          formData.append('statement_text', statementText);
         }
         if (moreInfoURL.length > 0) {
-          apiURL += `&more_info_url=${encodeURIComponent(moreInfoURL)}`;
+          formData.append('more_info_url', moreInfoURL);
         }
       }
+      formData.append('voter_device_id', voterDeviceId);
+      formData.append('voter_guide_possibility_id', voterGuidePossibilityId);
+      formData.append('voter_guide_possibility_position_id', voterGuidePossibilityPositionId);
+      formData.append('position_stance', stance);
+      formData.append('possibility_should_be_deleted', removePosition);
       debugSwLog('voterGuidePossibilityPositionSave: ', Date.now(), apiURL);
       console.log('background apiURL', apiURL);
-      fetch(apiURL).then((resp) => resp.json()).then((results) => {
+      fetch(apiURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData.toString()
+      }).then((resp) => resp.json()).then((results) => {
         debugSwLog('get json from voterGuidePossibilityPositionSave API SUCCESS', results);
         sendResponse({results});
       }).catch((err) => {
