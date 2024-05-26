@@ -2,7 +2,7 @@
 /* global debugTimingForegroundContent, debugTimingServiceWorker, debugServiceWorker, debugHilitorEnabled, debugStorageEvents, debugHilitorMatchEnabled */
 
 // SVGs lifted from WebApp thumbs-up-color-icon.svg and thumbs-down-color-icon.svg
-function markupForThumbSvgWithTooltips(classString, type, fillColor, stance) {
+function markupForThumbSvgWithTooltips (classString, type, fillColor, stance) {
   // Define tooltips for each type.
   const tooltips = {
     'POSSIBILITY_SUPPORT': 'Endorsement entered, but not visible to voters yet',
@@ -19,7 +19,7 @@ function markupForThumbSvgWithTooltips(classString, type, fillColor, stance) {
   const tooltipMessage = tooltips[stance] || 'Unknown icon type';
 
   let markup = "<svg class='" + classString + "' style='margin-top:3px'>";
-  markup += "<title>" + tooltipMessage + "</title>"; // Add tooltip using <title> element
+  markup += '<title>' + tooltipMessage + '</title>'; // Add tooltip using <title> element
 
   if (type === 'endorse') {
     markup += "<path fill='" + fillColor + "' d='M6,16.8181818 L8.36363636,16.8181818 L8.36363636,9.72727273 L6,9.72727273 L6,16.8181818 L6,16.8181818 Z M19,10.3181818 C19,9.66818182 18.4681818,9.13636364 17.8181818,9.13636364 L14.0895455,9.13636364 L14.6509091,6.43590909 L14.6686364,6.24681818 C14.6686364,6.00454545 14.5681818,5.78 14.4086364,5.62045455 L13.7822727,5 L9.89409091,8.89409091 C9.67545455,9.10681818 9.54545455,9.40227273 9.54545455,9.72727273 L9.54545455,15.6363636 C9.54545455,16.2863636 10.0772727,16.8181818 10.7272727,16.8181818 L16.0454545,16.8181818 C16.5359091,16.8181818 16.9554545,16.5227273 17.1327273,16.0972727 L18.9172727,11.9313636 C18.9704545,11.7954545 19,11.6536364 19,11.5 L19,10.3713636 L18.9940909,10.3654545 L19,10.3181818 L19,10.3181818 Z'/>" +

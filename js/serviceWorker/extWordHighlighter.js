@@ -56,10 +56,16 @@ constructionT0 = -1;
 })();
 
 // 5/22/24 This seemed like an experiment that did nothing, and would have required additional permissions from the Chrome store, so I commented it out
-// chrome.alarms.create({ periodInMinutes: 0.3 })
+// chrome.alarms.create({ periodInMinutes: 0.5 });
 // chrome.alarms.onAlarm.addListener(() => {
+//   console.log('Magic: because the extension does not start without this alarm timeout');
 //   return;
 // });
+
+// 5/24/24 Another experiment that should do nothing, but maybe allows the loading to proceed
+setTimeout(async () => {
+  await console.log('Magic: because the extension does not start without this dummy timeout 5/24/24');
+}, 300);
 
 function getWordsInGroup (groupName, highlightsList) {
   // eslint-disable-next-line prefer-destructuring
@@ -95,7 +101,7 @@ function combineHighlightsLists (voterGuideHighlights) {
   for (let i = 0; i < voterGuideHighlights.length; i++) {
     let highlight = voterGuideHighlights[i];
     const {we_vote_id: weVoteId, name, display} = highlight;
-    if (name && name.length > 2 && display=== 'DEFAULT' &&  (!Object.values(nameToIdMap).includes(weVoteId) || weVoteId == '' )) {
+    if (name && name.length > 2 && display=== 'DEFAULT' &&  (!Object.values(nameToIdMap).includes(weVoteId) || weVoteId === '')) {
       nameToIdMap[name.toLowerCase()] = weVoteId;
       highlight.display = 'DEFAULT';
       highlight.stance = '';
@@ -257,11 +263,11 @@ function getColor (typeStance, foreground) {
   }
 }
 
-function getIcon(typeStance) {
+function getIcon (typeStance) {
   let iconType;
-  if (typeStance.includes("SUPPORT") || typeStance === 'STORED_INFO') {
+  if (typeStance.includes('SUPPORT') || typeStance === 'STORED_INFO') {
     iconType = 'endorse';
-  } else if (typeStance.includes("OPPOSE")) {
+  } else if (typeStance.includes('OPPOSE')) {
     iconType = 'oppose';
   } else {
     iconType = '';
