@@ -907,10 +907,11 @@ let convertedOnClicks = ['JoeShmoe'];
 
 function addHighlightOnClick (id, url, element) {
   convertedOnClicks.push(id);
-  element.click(() => {
-    console.log('Detected onClick for ' + id + ', at url ' + url);
-    setModal(true, url, id);
-  });
+  // 06/07/2024 - Removed onclick function on the highlighted candidate names for WV-382
+  // element.click(() => {
+  //   console.log('Detected onClick for ' + id + ', at url ' + url);
+  //   setModal(true, url, id);
+  // });
 }
 
 function convertV2onClickToV3 () {  // 4/5/23: Removed the ".each" replacement of setModal that had been pre-written into every wrapped highlight markup, and replace it with a onClick made on the fly.
