@@ -328,7 +328,9 @@ function Hilitor (id, tag) {
       // if (wordColor[wordfound].Icon.length) {
       //   $(match).prepend(wordColor[wordfound].Icon);
       // }
-      jQueryEmNode.wrap('<button type="button" id="' + id + '" class="endorsementHighlights"></button>');
+      // Converted "button" to "span" to remove the "cursor: pointer" display.
+      // jQueryEmNode.wrap('<button type="button" id="' + id + '" class="endorsementHighlights"></button>');
+      jQueryEmNode.wrap('<span id="' + id + '" class="endorsementHighlights"></span>');
       const createNew = wordColor[wordfound].Color === '#ff6';         // If yellow highlight
       if (createNew) {
         if (addElementToPositions(positions, { 'ballot_item_name': wordColor[wordfound].Regex })) {
@@ -336,13 +338,13 @@ function Hilitor (id, tag) {
         }
       }
 
-      const frameUrl = createNew ? addCandidateExtensionWebAppURL : candidateExtensionWebAppURL + '?candidate_name=' + encodedName +
-        '&candidate_we_vote_id=' + candidateId +
-        '&endorsement_page_url=' + encodeURIComponent(location.href) +
-        '&candidate_specific_endorsement_url=' + candidateHomePage +
-        '&voter_guide_possibility_id=' + voterGuidePossibilityId;
-
-      addHighlightOnClick(id, frameUrl, jQueryEmNode);
+      // 06/07/2024 - Removed onclick function on the highlighted candidate names for WV-382
+      // const frameUrl = createNew ? addCandidateExtensionWebAppURL : candidateExtensionWebAppURL + '?candidate_name=' + encodedName +
+      //   '&candidate_we_vote_id=' + candidateId +
+      //   '&endorsement_page_url=' + encodeURIComponent(location.href) +
+      //   '&candidate_specific_endorsement_url=' + candidateHomePage +
+      //   '&voter_guide_possibility_id=' + voterGuidePossibilityId;
+      // addHighlightOnClick(id, frameUrl, jQueryEmNode);
     }
     return urlHref;
   };

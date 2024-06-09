@@ -36,31 +36,42 @@ const colors = {
   DELETED_BACKGROUND: '#f0c7c8',
 };
 
-const webAppChoice = 'quality';           // should be 'production' in git repository
+const webAppChoice = 'production';  // should be 'production' in git repository
+// webAppRoot gets set from webAppChoice
+// production = quality.wevote.us (we use the team qa site instead of live site)
+// localhost = localhost:3000 (for developers who haven't set up wevotedeveloper.com in /etc/hosts)
+// wevotedeveloper = wevotedeveloper.com (for developers who have set up)
 const apiServerChoice = 'production';     // should be 'production' in git repository
+// apiRoot and cdnRoot gets set from apiServerChoice. Same options as above.
 const overrideStartingYear = false;       // Should be 'false' in git repository
-const startingYearOverride = 2022;
+const startingYearOverride = 2024;
 const allowAnyYearForVoterGuides = false;
 let webAppRoot = '';
 let apiRoot = '';
 let cdnRoot = '';
 let extensionSrc = '';
 switch (webAppChoice) {
-  case 'production':
-    webAppRoot = 'https://wevote.us'; break;
-  case 'quality':
-    webAppRoot = 'https://quality.wevote.us'; break;
-  case 'developer':
-    // webAppRoot = 'https://wevotedeveloper.com:3000'; break;
+  case 'localhost':
     webAppRoot = 'https://localhost:3000'; break;
+  default:
+  case 'production':
+    webAppRoot = 'https://quality.wevote.us'; break;
+  case 'wevotedeveloper':
+    webAppRoot = 'https://wevotedeveloper.com:3000'; break;
 }
 switch (apiServerChoice) {
+  case 'localhost':
+    apiRoot = 'https://localhost:8000';
+    cdnRoot = 'https://localhost:8000';
+    extensionSrc = '/src';
+    break;
+  default:
   case 'production':
     apiRoot = 'https://api.wevoteusa.org';
     cdnRoot = 'https://cdn.wevoteusa.org';
     extensionSrc = '';
     break;
-  case 'developer':
+  case 'wevotedeveloper':
     apiRoot = 'https://wevotedeveloper.com:8000';
     cdnRoot = 'https://wevotedeveloper.com:8000';
     extensionSrc = '/src';
