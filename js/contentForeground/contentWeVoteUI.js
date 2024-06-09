@@ -321,7 +321,7 @@ function topMenu () {
     '<div id="topMenuContainer" class="topMenuContainer">' +
     '  <img id="orgLogo" class="gridOrgIcon" src="https://wevote.us/img/endorsement-extension/endorsement-icon48.png" alt="">' +
     '  <span id="orgName" class="gridOrgName core-text"></span>' +
-    '  <button type="button" id="openAdminButton" class="openInAdminApp weButton u2i-button u2i-widget u2i-corner-all removeContentStyles">ADMIN APP</button>' +
+    '  <button type="button" id="openAdminButton" class="openInAdminApp weButton u2i-button u2i-widget u2i-corner-all removeContentStyles">See on Admin Site</button>' +
     '  <span class="innerGridSend core-text">' +
     '    <span class="topCommentLabel core-text">Send us a comment about this page: </span>' +
     '    <input type="text" id="emailWe" class="core-text" name="email" placeholder="Your email" >' +
@@ -950,7 +950,7 @@ function candidatePaneMarkup (candNo, furlNo, i, candidate, detachedDialog) {
       "      <button type='button' class='revealLeft-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>REVEAL</button>";
     }
     markup +=
-      "      <button type='button' class='openInAdminApp-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>ADMIN APP</button>";
+      "      <button type='button' class='openInAdminApp-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>ADMIN SITE</button>";
     if (party !== undefined && detachedDialog) {
       markup +=
         "    <button type='button' class='openInWebApp-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>JUMP TO WE VOTE</button>";
@@ -1024,7 +1024,7 @@ function unfurlableGrid (index, name, photo, party, office, description, inLeftP
     }
     if (showComment) {    // https://material.io/resources/icons/?style=baseline comment
       iconContainer +=
-        '  <svg class="commentIconSVG ' + (showCommentOnly ? 'commentIconOnly' : '') + '" style="margin-top:3px; background-color:' + backgroundColor(stance, isStored) + ';" viewBox=' + viewBoxComment + '>' +
+        '  <svg class="commentIconSVG ' + (showCommentOnly ? 'commentIconOnly' : '') + '" style="margin-top:0px; background-color:' + backgroundColor(stance, isStored) + ';" viewBox=' + viewBoxComment + '>' +
         '    <path fill="white" d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>' +
         '    <path d="M0 0h24v24H0z" fill="none"/>' +
         '  </svg>';
@@ -1316,7 +1316,7 @@ function deactivateActivePositionPane () {
 
 async function getSuggestionPopupURL (selection) {
   const state = await getGlobalState();
-  const { voterGuidePossibilityId } = state;
+  const { voterGuidePossibilityId, voterIsSignedIn } = state;
   const endorsements = await getCurrentEndorsements();
   if (!selection) {
     console.log('create/edit position no selection: ', selection);
@@ -1348,7 +1348,8 @@ async function getSuggestionPopupURL (selection) {
           '&candidate_we_vote_id=' + id + '&endorsement_page_url=' + encodeURIComponent(location.href) +
           '&candidate_specific_endorsement_url=' +
           '&statement_text=' + encodeURIComponent(statementText) + '&position_stance=' + stance +
-          '&voter_guide_possibility_id=' + voterGuidePossibilityId;
+          '&voter_guide_possibility_id=' + voterGuidePossibilityId +
+          '&voter_is_signed_in_within_extension=' + voterIsSignedIn;
         debugFgLog('getSuggestionPopupURL EDIT: ', frameUrl);
         return frameUrl;
       }
@@ -1357,7 +1358,8 @@ async function getSuggestionPopupURL (selection) {
 
   const frameUrl = addCandidateExtensionWebAppURL + '?candidate_name=' + encodeURIComponent(selection) +
     '&candidate_we_vote_id=&endorsement_page_url=' + encodeURIComponent(location.href) +
-    '&candidate_specific_endorsement_url=';
+    '&candidate_specific_endorsement_url=' +
+    '&voter_is_signed_in_within_extension=' + voterIsSignedIn;
   debugFgLog('getSuggestionPopupURL CREATE ADD: ', frameUrl);
   return frameUrl;
 }
@@ -1377,7 +1379,7 @@ async function openSuggestionPopUp (selection) {
     title: title,
     show: true,
     width: 450,
-    height: 6580,
+    height: 6630,
     resizable: false,
     fixedDimensions: true,
     closeText: '',
@@ -1417,7 +1419,7 @@ async function openSuggestionPopUp (selection) {
   });
   $("[name='weIframeByName']").css({
     width: '450px',
-    height: '642px',
+    height: '700px',
     'z-index': 100,
   });
   $('.u2i-resizable-handle').css('display', 'none');

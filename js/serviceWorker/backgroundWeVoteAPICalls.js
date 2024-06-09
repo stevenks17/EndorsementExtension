@@ -6,6 +6,29 @@ let voterGuidePossibilityPositionsRetrieveT0 = 0;
 /* eslint-disable no-unused-vars */
 /* eslint no-undef: 0 */
 
+// Eventually pull this list from the API server (see constant there with same name)
+const WEBSITES_WE_DO_NOT_SCAN_FOR_ENDORSEMENTS = [
+  'addtoany.com', 'api.wevoteusa.org', 'app.jazz.co', 'atlassian.com', 'atlassian.net',
+  'doubleclick.net',
+  'github.com', 'google.com',
+  'platform.twitter.com',
+  'regex101.com',
+  's7.addthis.com',
+  'vars.hotjar.com',
+  'w3schools.com', 'wevote.us',
+];
+
+function isValueFromArrayInString (incomingValue, incomingArray) {
+  let valueFromArrayFoundInString = false;
+  for (let i = 0; i < incomingArray.length; i++) {
+    if (incomingValue.includes(incomingArray[i])) {
+      valueFromArrayFoundInString = true;
+      console.log('isValueFromArrayInString, incomingValue:', incomingValue, ', contains: ', incomingArray[i]);
+    }
+  }
+  return valueFromArrayFoundInString;
+}
+
 async function getHighlightsListsFromApiServer (locationHref, voterDeviceId, tabId, doReHighlight, sendResponse, showVoterGuideHighlights, showCandidateOptionsHighlights, pageContent) {
   // Replaced ballotItemHighlightsRetrieve API call with voterGuidePossibilityHighlightsRetrieve API (POST Method) - 03/11/2024
   const getHighlightsListsFromApiServerDebug = true;
@@ -23,11 +46,14 @@ async function getHighlightsListsFromApiServer (locationHref, voterDeviceId, tab
   }
   const hrefEncoded = encodeURIComponent(urlToEncode); //'https://www.emilyslist.org/pages/entry/state-and-local-candidates');
   const voterGuidePossibilityHighlightsRetrieve = `${rootApiURL}/voterGuidePossibilityHighlightsRetrieve/?voter_device_id=${voterDeviceId}&limit_to_existing=true&url_to_scan=${hrefEncoded}`;
-  const voterGuidePossibilityHighlightsRetrieve2 =`${rootApiURL}/voterGuidePossibilityHighlightsRetrieve/` 
+  const voterGuidePossibilityHighlightsRetrieve2 =`${rootApiURL}/voterGuidePossibilityHighlightsRetrieve/`;
   debugSwLog('voterGuidePossibilityHighlightsRetrieve: ', voterGuidePossibilityHighlightsRetrieve);
 
+  const isWebsiteWeDoNotScanForEndorsements = isValueFromArrayInString(locationHref, WEBSITES_WE_DO_NOT_SCAN_FOR_ENDORSEMENTS);
   const t1 = performance.now();
-  if (showVoterGuideHighlights && showCandidateOptionsHighlights){
+  if (isWebsiteWeDoNotScanForEndorsements) {
+    //
+  } else if (showVoterGuideHighlights && showCandidateOptionsHighlights){
     debugSwLog('background voterGuidePossibilityHighlightsRetrieve (get the greens/reds/grays)', voterGuidePossibilityHighlightsRetrieve);
     const formData = new URLSearchParams();
     formData.append('voter_device_id', voterDeviceId);
@@ -41,7 +67,7 @@ async function getHighlightsListsFromApiServer (locationHref, voterDeviceId, tab
       },
       body: formData.toString()
     }).then((resp) => resp.json()).then((voterGuidePossibilityHighlightsRetrieveResponse) => {
-        console.log('voterGuidePossibilityHighlightsRetrieve2',voterGuidePossibilityHighlightsRetrieveResponse)
+        console.log('voterGuidePossibilityHighlightsRetrieve2',voterGuidePossibilityHighlightsRetrieveResponse);
         getHighlightsListsFromApiServerDebug && debugSwLog('ENTERING COMBINED backgroundWeVoteAPICalls > voterGuidePossibilityHighlightsRetrieve API results received');
         debugSwLog('------------------- voterGuidePossibilityHighlightsRetrieve API SUCCESS voterGuidePossibilityHighlightsRetrieve: ' + voterGuidePossibilityHighlightsRetrieve);
         const t2 = performance.now();
@@ -149,6 +175,11 @@ function processVoterGuideHighlightsRetrieve (tabId, voterGuidePossibilityHighli
 function getOrganizationFound (locationHref, sendResponse) {
   const getOrganizationFoundDebug = true;
   let data = {};
+  const isWebsiteWeDoNotScanForEndorsements = isValueFromArrayInString(locationHref, WEBSITES_WE_DO_NOT_SCAN_FOR_ENDORSEMENTS);
+  if (isWebsiteWeDoNotScanForEndorsements) {
+    return data;
+  }
+
   const hrefEncoded = encodeURIComponent(locationHref);
   const t0 = performance.now();
   getVoterDeviceId().then((voterDeviceId) => {
@@ -273,11 +304,15 @@ function getVoterSignInInfo (sendResponse) {
 function getPossiblePositions (voterGuidePossibilityId, hrefURL, voterDeviceId, isIFrame, sendResponse) {
   debugSwLog('ENTERING backgroundWeVoteAPICalls > getPossiblePositions');
   // https://api.wevoteusa.org/apis/v1/voterGuidePossibilityPositionsRetrieve/?voter_device_id=cYBPkwago&voter_guide_possibility_id=65
-  if (voterGuidePossibilityPositionsRetrieveT0 > 0) {
+  const isWebsiteWeDoNotScanForEndorsements = isValueFromArrayInString(hrefURL, WEBSITES_WE_DO_NOT_SCAN_FOR_ENDORSEMENTS);
+
+  if (voterGuidePossibilityPositionsRetrieveT0 > 0 && !isWebsiteWeDoNotScanForEndorsements) {
     timingSwLog(voterGuidePossibilityPositionsRetrieveT0, performance.now(), 'period between voterGuidePossibilityPositionsRetrieve calls ', 5.0);
   }
 
-  if (voterDeviceId && voterDeviceId.length > 0) {
+  if (isWebsiteWeDoNotScanForEndorsements) {
+    // We don't want to getPossiblePositions on this website
+  } else if (voterDeviceId && voterDeviceId.length > 0) {
     let vGPId = voterGuidePossibilityId;
     if (!voterGuidePossibilityId || voterGuidePossibilityId === 0 || voterGuidePossibilityId === '' || voterGuidePossibilityId === 'undefined') {
       debugSwLog('getPossiblePositions called without a voterGuidePossibilityIdCache');
