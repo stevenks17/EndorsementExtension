@@ -14,17 +14,24 @@ with many thanks to, and the permission of, [Wim Deboel](http://deboel.eu/).
 6. Clicking the "background page" link opens a chrome devtools instance that can be used to 
 debug your "Foreground Content Script" (Foreground scripts are the only component of an extension that has access to the web-page's DOM).
 
-7.  **Unfortunately you will need to manually add the Chrome ID for your installation into the code.**
-These Chrome IDs stay stable for your machine over time, and feel free to leave your id in the checked in code.
-    
-    As of November 2023, when you try to run the extension, a message will appear in the 
-console log for your endorsement page that will say something like
-    
-   `Message ignored due to unknown sender id: pxxxxxggdjnjhdlhgpfcafbkghyyyyyai`
+[//]: # (7.  **Unfortunately you will need to manually add the Chrome ID for your installation into the code.**)
 
-    Copy this "sender id" (Chrome extension id) and in tabWordHighlight.js at about line 140, add your id as another line
-    in the "if" condition.
-8. Next time you reload the extension it should allow messages to be sent and received between diferent execution environments of the extension (more on this later).
+[//]: # (These Chrome IDs stay stable for your machine over time, and feel free to leave your id in the checked in code.)
+
+[//]: # (    )
+[//]: # (    As of November 2023, when you try to run the extension, a message will appear in the )
+
+[//]: # (console log for your endorsement page that will say something like)
+
+[//]: # (    )
+[//]: # (   `Message ignored due to unknown sender id: pxxxxxggdjnjhdlhgpfcafbkghyyyyyai`)
+
+[//]: # ()
+[//]: # (    Copy this "sender id" &#40;Chrome extension id&#41; and in tabWordHighlight.js at about line 140, add your id as another line)
+
+[//]: # (    in the "if" condition.)
+
+[//]: # (8. Next time you reload the extension it should allow messages to be sent and received between diferent execution environments of the extension &#40;more on this later&#41;.)
 9. At this point the extension should be working on your dev setup.
 
 
