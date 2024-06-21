@@ -956,7 +956,7 @@ function candidatePaneMarkup (candNo, furlNo, i, candidate, detachedDialog) {
         "    <button type='button' class='openInWebApp-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>JUMP TO WE VOTE</button>";
     }
     markup +=
-      "      <button type='button' class='deleteButton-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>DELETE</button>" +
+    "      <button type='button' class='deleteButton-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'"+ (isStored ? " disabled" : "")+">DELETE</button>" +
       "      <button type='button' class='saveButton-" + i + " weButton u2i-button u2i-widget u2i-corner-all removeContentStyles'>SAVE</button>" +
       '    </span>' +
       '  </div>' +
