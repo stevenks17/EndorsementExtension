@@ -67,17 +67,17 @@ async function getHighlightsListsFromApiServer (locationHref, voterDeviceId, tab
       },
       body: formData.toString()
     }).then((resp) => resp.json()).then((voterGuidePossibilityHighlightsRetrieveResponse) => {
-        console.log('voterGuidePossibilityHighlightsRetrieve2',voterGuidePossibilityHighlightsRetrieveResponse);
-        getHighlightsListsFromApiServerDebug && debugSwLog('ENTERING COMBINED backgroundWeVoteAPICalls > voterGuidePossibilityHighlightsRetrieve API results received');
-        debugSwLog('------------------- voterGuidePossibilityHighlightsRetrieve API SUCCESS voterGuidePossibilityHighlightsRetrieve: ' + voterGuidePossibilityHighlightsRetrieve);
-        const t2 = performance.now();
-        timingSwLog(t1, t2, 'voterGuidePossibilityHighlightsRetrieve API retrieve took', 8.0);
-        // Get all candidates in this year's elections
-        const t3 = performance.now();
-        processHighlightsRetrieve(tabId, locationHref, voterGuidePossibilityHighlightsRetrieveResponse,
-          doReHighlight, sendResponse);
-        const t6 = performance.now();
-        timingSwLog(t5, t6, 'processHighlightsRetrieve end-to-end took', 8.0);
+      console.log('voterGuidePossibilityHighlightsRetrieve2',voterGuidePossibilityHighlightsRetrieveResponse);
+      getHighlightsListsFromApiServerDebug && debugSwLog('ENTERING COMBINED backgroundWeVoteAPICalls > voterGuidePossibilityHighlightsRetrieve API results received');
+      debugSwLog('------------------- voterGuidePossibilityHighlightsRetrieve API SUCCESS voterGuidePossibilityHighlightsRetrieve: ' + voterGuidePossibilityHighlightsRetrieve);
+      const t2 = performance.now();
+      timingSwLog(t1, t2, 'voterGuidePossibilityHighlightsRetrieve API retrieve took', 8.0);
+      // Get all candidates in this year's elections
+      const t3 = performance.now();
+      processHighlightsRetrieve(tabId, locationHref, voterGuidePossibilityHighlightsRetrieveResponse,
+        doReHighlight, sendResponse);
+      const t6 = performance.now();
+      timingSwLog(t5, t6, 'processHighlightsRetrieve end-to-end took', 8.0);
     }).catch((err) => {
       debugSwLog('voterGuidePossibilityHighlightsRetrieve API error', err);
     });
