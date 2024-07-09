@@ -342,9 +342,9 @@ function topMenu () {
     const { voterGuidePossibilityId } = state;
     let adminUrl;
     if (voterGuidePossibilityId === undefined) {
-      adminUrl = 'https://api.wevoteusa.org/vg/create'
+      adminUrl = `${apiRoot}/vg/create`;
     } else {
-      adminUrl = 'https://api.wevoteusa.org/vg/create/?voter_guide_possibility_id=' + (voterGuidePossibilityId);
+      adminUrl = `${apiRoot}/vg/create/?voter_guide_possibility_id=${voterGuidePossibilityId}`;
     }
     window.open(adminUrl, '_blank');
     console.log('voterGuidePossibilityId:', voterGuidePossibilityId);
@@ -1261,8 +1261,7 @@ function addHandlersForCandidatePaneButtons (targetDiv, number, detachedDialog) 
         event.stopPropagation();
         let candidateName = $('#candidateName-' + number).val();
         candidateName = encodeURIComponent(candidateName);
-        let URL = 'https://api.wevoteusa.org/c/?show_all_elections=1&hide_candidate_tools=0&page=0&state_code=' +
-          '&candidate_search=' + candidateName + '&show_all_elections=False';
+        let URL = `${apiRoot}/c/?show_all_elections=1&hide_candidate_tools=0&page=0&state_code=&candidate_search=${candidateName}&show_all_elections=False`;
         window.open(URL, '_blank');
       });
     } else if (className.startsWith('openInWebApp-')) {
@@ -1270,7 +1269,7 @@ function addHandlersForCandidatePaneButtons (targetDiv, number, detachedDialog) 
         event.stopPropagation();
         const candidateWeVoteId = $('#candidateWeVoteId-' + number).val();
         if (candidateWeVoteId.length) {
-          let URL = 'https://wevote.us/candidate/' + candidateWeVoteId + '/b/btdo/';
+          let URL = `${webAppRoot}/candidate/${candidateWeVoteId}/b/btdo/`;
           window.open(URL, '_blank');
         }
       });
