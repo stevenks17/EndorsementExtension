@@ -9,7 +9,7 @@ function isInOurIFrame () {
   // const headerExists = $('div#wedivheader').length > 0;   // this is true if in our highlighted "Endorsement Page" that is framed by the "Open Edit Panel" button action}
   const correctFrameExists = $('iframe.weVoteEndorsementFrame').length > 0;
   const { host } = window.location;
-  const isAPotentialEndorsementPage = !(host.includes('localhost') || host.includes('wevote.us') || host.includes('about:blank'));
+  const isAPotentialEndorsementPage = !(host.includes('wevotedeveloper.com') || host.includes('localhost') || host.includes('wevote.us') || host.includes('about:blank'));
   return correctFrameExists && isAPotentialEndorsementPage;
 }
 
