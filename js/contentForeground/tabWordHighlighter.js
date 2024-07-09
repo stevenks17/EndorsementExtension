@@ -154,7 +154,7 @@ async function initializeTabWordHighlighter () {
   // If not in our iFrame
   if (!isInOurIFrame() && !isInANonWeVoteIFrame()) {
     // Check to see if we are on the WebApp signin page, and capture the device id if signed in
-    if (host.indexOf('wevote.us') > -1 || host.indexOf('localhost:3000') > -1) {
+    if (host.indexOf('wevote.us') > -1 || host.indexOf('localhost:3000') > -1 || host.indexOf('wevotedeveloper.com:3000') > -1) {
       const voterDeviceIdFromPage = getVoterDeviceIdFromWeVoteDomainPage();
       if (voterDeviceIdFromPage.length) {
         getVoterDeviceId().then((voterDeviceId) => {
