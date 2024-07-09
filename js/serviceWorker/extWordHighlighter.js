@@ -1002,7 +1002,7 @@ function getWeVoteTabs () {
     let results = '';
     for (let i = 0; i < tabs.length; i++) {
       const { id: tabId, url } = tabs[i];
-      if (url.includes('https://wevote.us/') || url.includes('https://quality.wevote.us/') || url.includes('https://localhost:3000/')) {
+      if (url.includes('https://wevote.us/') || url.includes('https://quality.wevote.us/') || url.includes('https://localhost:3000/') || url.includes('https://wevotedeveloper.com:3000/')) {
         results += '|' + tabId +'|';
         debugSwLog('extWordHighlighter.getWeVoteTabs: ' + tabId + ', : ' + url);
       }

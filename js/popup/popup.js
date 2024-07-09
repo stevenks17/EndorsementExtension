@@ -180,8 +180,8 @@ document.addEventListener('DOMContentLoaded', function () {
   ) {
     if (organizationWeVoteId || organizationTwitterHandle) {
       const urlWebApp = organizationTwitterHandle
-        ? 'https://wevote.us/' + organizationTwitterHandle
-        : 'https://wevote.us/voterguide/' + organizationWeVoteId;
+        ? `${webAppRoot}/${organizationTwitterHandle}`
+        : `${webAppRoot}/voterguide/${organizationWeVoteId}`;
       $('#allEndorsementsButton').text(
         organizationName && organizationName.length
           ? 'Endorsements: ' + organizationName
