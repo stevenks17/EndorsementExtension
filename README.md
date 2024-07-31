@@ -37,6 +37,7 @@ debug your "Foreground Content Script" (Foreground scripts are the only componen
 
 Notes:
 
+* For those working on EndorsementExtension, ask Dale for Twitter, Twilio, Vertex, and Email credentials. Those will go in the config/environment_variables.json in WeVoteServer code. It will help you save time figuring out those errors.
 * That "Errors" button on the [chrome://extensions/](chrome://extensions/) shows some code validation errors, and some
 runtime errors.  It can be useful, but not as useful as the "background page" devtools.
 * Errors like `Unchecked runtime.lastError: The message port closed before a response was received.` can usually be 
