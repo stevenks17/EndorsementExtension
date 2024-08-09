@@ -49,6 +49,7 @@ const initialState = {
   voterWeVoteId: '',
   weVoteId: '',
   windowId: 0,
+  firstTimePanelOpen: false
 };
 
 async function getGlobalState () {

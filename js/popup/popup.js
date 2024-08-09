@@ -322,6 +322,13 @@ document.addEventListener('DOMContentLoaded', function () {
         let showPanels = !state.showPanels;
         let showHighlights = showPanels; // Assuming that showing panels implies highlighting
         const isFromPDF = pdfURL && pdfURL.endsWith('.pdf');
+        let firstTimePanelOpen = state.firstTimePanelOpen
+
+        if (openEditPanelButtonSelector.text() === openEditText){
+          firstTimePanelOpen = true
+        }else if(openEditPanelButtonSelector.text() === removeEditText){
+          firstTimePanelOpen = false
+        }
 
         await registerPromise(
           updateGlobalState({
@@ -330,6 +337,7 @@ document.addEventListener('DOMContentLoaded', function () {
             showPanels: showPanels,
             showHighlights: showHighlights,
             tabId: showPanels ? tabId : -1, // Use -1 as tabId to indicate removal
+            firstTimePanelOpen: firstTimePanelOpen
           })
         );
 
