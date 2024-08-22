@@ -35,7 +35,6 @@ let printHighlights = true;
 let uniqueNameMatches = [];
 let voterDeviceId = '';
 let debug = false;
-let firstTimePanelOpen = true;
 
 document.addEventListener('DOMContentLoaded', async function () {  // This wastes about 1 ms for every open tab in the browser, that we are not going to highlight on
   const t0 = performance.now();
@@ -80,7 +79,7 @@ document.addEventListener('DOMContentLoaded', async function () {  // This waste
     for (const entry of entries) {
       if (entry.type== 'childList' && entry.addedNodes.length >1){
         let state = await getGlobalState();
-        let { showHighlights, showPanels, tabId} = state;
+        let { showHighlights, showPanels, tabId, firstTimePanelOpen} = state;
 
         if (showPanels){
           if(firstTimePanelOpen){
@@ -96,6 +95,7 @@ document.addEventListener('DOMContentLoaded', async function () {  // This waste
               }, 5000);
             }
             firstTimePanelOpen = false;
+            await updateGlobalState({ firstTimePanelOpen: firstTimePanelOpen});
           }else {
             showPanels = false;
             displayHighlightingAndPossiblyEditor(showHighlights, showPanels, tabId);
