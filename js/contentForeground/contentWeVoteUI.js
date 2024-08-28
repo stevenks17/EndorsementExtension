@@ -471,13 +471,13 @@ async function handleGetRefreshedHighlightsResponse (response, showPanels, lastE
       const nameInFrame = $(parent.document).find('#frame:first').contents().find(':contains(' + candidateName + '):last');
       if (nameInFrame.length !== 0){
         const buttonId = candidateName.replace(/\s+/g, '');
-        const selector = `button[id="${buttonId}"]`;
+        const selector = `#${buttonId}`;
         const isActiveElementInIframe = document.activeElement.classList.contains('ae-iframe-body');
         let button = '';
         if (isActiveElementInIframe){
           button = document.querySelector(selector)
         }else{
-          button = parent.document.querySelector('.weVoteEndorsementFrame').contentDocument.querySelector(`button[id="${buttonId}"]`);
+          button = parent.document.querySelector('.weVoteEndorsementFrame').contentDocument.querySelector(`#${buttonId}`);
         }
         const emElement = button.querySelector('em');
         if (state.voterGuideHighlights.Groups[1].Words.includes(candidateName)) {
